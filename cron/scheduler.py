@@ -573,6 +573,43 @@ def run_job(job: dict) -> tuple[bool, str, str, Optional[str]]:
             },
         )
 
+        # ── Agent SDK backend (optional) ──────────────────────────────
+        _use_sdk = os.getenv("HERMES_AGENT_SDK", "").lower() in ("1", "true", "yes")
+        if not _use_sdk:
+            try:
+                _use_sdk = user_cfg.get("agent_sdk", {}).get("enabled", False)
+            except Exception:
+                pass
+
+        if _use_sdk:
+            import asyncio as _aio
+            from agent.sdk_adapter import run_sdk_oneshot
+            _sdk_cfg = user_cfg.get("agent_sdk", {})
+            result = _aio.run(run_sdk_oneshot(
+                prompt=prompt,
+                system_prompt="",
+                context={"task_id": _cron_session_id, "_session_db": _session_db},
+                permission_mode=_sdk_cfg.get("permission_mode", "bypassPermissions"),
+                max_turns=_sdk_cfg.get("max_turns", max_iterations),
+                model=_sdk_cfg.get("model"),
+                skip_duplicate_tools=_sdk_cfg.get("skip_duplicate_tools", True),
+            ))
+            # Skip the AIAgent path — jump directly to result handling
+            final_response = result.get("final_response", "") or ""
+            logged_response = final_response if final_response else "(No response generated)"
+            output = f"""# Cron Job: {job_name}
+**Time:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+**Backend:** Agent SDK
+
+{final_response}"""
+            # Save output
+            outputs_dir = Path(hermes_home) / "cron" / "outputs"
+            outputs_dir.mkdir(parents=True, exist_ok=True)
+            output_path = outputs_dir / f"{job.get('id', 'unknown')}.md"
+            output_path.write_text(output, encoding="utf-8")
+            logger.info("Job '%s' completed via Agent SDK: %s", job_name, logged_response[:200])
+            return result
+
         agent = AIAgent(
             model=turn_route["model"],
             api_key=turn_route["runtime"].get("api_key"),
@@ -595,7 +632,7 @@ def run_job(job: dict) -> tuple[bool, str, str, Optional[str]]:
             session_id=_cron_session_id,
             session_db=_session_db,
         )
-        
+
         # Run the agent with an *inactivity*-based timeout: the job can run
         # for hours if it's actively calling tools / receiving stream tokens,
         # but a hung API call or stuck tool with no activity for the configured

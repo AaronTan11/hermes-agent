@@ -6640,7 +6640,58 @@ class GatewayRunner:
             _approval_session_token = set_current_session_key(_approval_session_key)
             register_gateway_notify(_approval_session_key, _approval_notify_sync)
             try:
-                result = agent.run_conversation(message, conversation_history=agent_history, task_id=session_id)
+                # ── Agent SDK backend (optional) ──────────────────
+                _use_sdk = os.getenv("HERMES_AGENT_SDK", "").lower() in ("1", "true", "yes")
+                if not _use_sdk:
+                    try:
+                        _use_sdk = (self._config or {}).get("agent_sdk", {}).get("enabled", False)
+                    except Exception:
+                        pass
+
+                if _use_sdk:
+                    import asyncio as _aio
+                    from agent.sdk_adapter import SDKAgentRunner
+                    _sdk_cfg = (self._config or {}).get("agent_sdk", {})
+
+                    # Lazily create / reuse an SDK runner per gateway session
+                    _sdk_cache = getattr(self, '_sdk_runner_cache', None)
+                    if _sdk_cache is None:
+                        _sdk_cache = {}
+                        self._sdk_runner_cache = _sdk_cache
+                    _sdk_runner = _sdk_cache.get(session_key)
+
+                    _sdk_resume_id = None
+                    if _sdk_runner is not None:
+                        _sdk_resume_id = _sdk_runner.sdk_session_id
+
+                    if _sdk_runner is None:
+                        _sdk_runner = SDKAgentRunner(
+                            system_prompt=combined_ephemeral or "",
+                            context={
+                                "task_id": session_id,
+                                "_memory_store": getattr(agent, '_memory_store', None) if agent else None,
+                                "_todo_store": getattr(agent, '_todo_store', None) if agent else None,
+                                "_session_db": self._session_db,
+                                "_memory_manager": getattr(agent, '_memory_manager', None) if agent else None,
+                                "session_id": session_id,
+                            },
+                            permission_mode=_sdk_cfg.get("permission_mode", "bypassPermissions"),
+                            max_turns=_sdk_cfg.get("max_turns", 90),
+                            model=_sdk_cfg.get("model"),
+                            skip_duplicate_tools=_sdk_cfg.get("skip_duplicate_tools", True),
+                            resume_session_id=_sdk_resume_id,
+                        )
+                        _sdk_cache[session_key] = _sdk_runner
+
+                    result = _aio.run(_sdk_runner.run_conversation(
+                        message=message,
+                        stream_callback=_stream_delta_cb,
+                        tool_progress_callback=progress_callback if tool_progress_enabled else None,
+                        task_id=session_id,
+                    ))
+                else:
+                    result = agent.run_conversation(message, conversation_history=agent_history, task_id=session_id)
+                # ── End Agent SDK branch ──────────────────────────
             finally:
                 unregister_gateway_notify(_approval_session_key)
                 reset_current_session_key(_approval_session_token)

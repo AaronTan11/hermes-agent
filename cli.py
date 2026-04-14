@@ -6410,6 +6410,59 @@ class HermesCLI:
                 if _msn:
                     agent_message = _msn + "\n\n" + agent_message
                     self._pending_model_switch_note = None
+
+                # ── Agent SDK backend (optional) ──────────────────────
+                _use_sdk = os.getenv("HERMES_AGENT_SDK", "").lower() in ("1", "true", "yes")
+                if not _use_sdk:
+                    try:
+                        from hermes_cli.config import load_config as _lc
+                        _use_sdk = _lc().get("agent_sdk", {}).get("enabled", False)
+                    except Exception:
+                        pass
+
+                if _use_sdk:
+                    import asyncio as _aio
+                    try:
+                        from agent.sdk_adapter import SDKAgentRunner
+                        from hermes_cli.config import load_config as _lc2
+                        _sdk_cfg = _lc2().get("agent_sdk", {})
+
+                        # Lazily create / reuse a runner for this CLI session
+                        if not hasattr(self, '_sdk_runner') or self._sdk_runner is None:
+                            self._sdk_runner = SDKAgentRunner(
+                                system_prompt=getattr(self, '_system_prompt', ''),
+                                context={
+                                    "task_id": self.session_id,
+                                    "_memory_store": getattr(self, '_memory_store', None),
+                                    "_todo_store": getattr(self, '_todo_store', None),
+                                    "_session_db": getattr(self, '_session_db', None),
+                                    "_memory_manager": getattr(self, '_memory_manager', None),
+                                    "session_id": self.session_id,
+                                },
+                                permission_mode=_sdk_cfg.get("permission_mode", "acceptEdits"),
+                                max_turns=_sdk_cfg.get("max_turns", 90),
+                                model=_sdk_cfg.get("model"),
+                                skip_duplicate_tools=_sdk_cfg.get("skip_duplicate_tools", True),
+                            )
+
+                        result = _aio.run(self._sdk_runner.run_conversation(
+                            message=agent_message,
+                            stream_callback=stream_callback,
+                            task_id=self.session_id,
+                        ))
+                    except Exception as exc:
+                        logging.error("SDK run_conversation raised: %s", exc, exc_info=True)
+                        result = {
+                            "final_response": f"Error: {str(exc)[:300]}",
+                            "messages": [],
+                            "api_calls": 0,
+                            "completed": False,
+                            "failed": True,
+                            "error": str(exc)[:300],
+                        }
+                    return
+                # ── End Agent SDK branch ──────────────────────────────
+
                 try:
                     result = self.agent.run_conversation(
                         user_message=agent_message,
