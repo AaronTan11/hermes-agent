@@ -6378,15 +6378,27 @@ class GatewayRunner:
 
             model = _resolve_gateway_model(user_config)
 
-            try:
-                runtime_kwargs = _resolve_runtime_agent_kwargs()
-            except Exception as exc:
-                return {
-                    "final_response": f"⚠️ Provider authentication failed: {exc}",
-                    "messages": [],
-                    "api_calls": 0,
-                    "tools": [],
-                }
+            # SDK backend bypasses provider auth — Claude Code subprocess
+            # handles its own auth via the user's subscription.
+            _early_use_sdk = os.getenv("RHEMIFY_AGENT_SDK", "").lower() in ("1", "true", "yes")
+            if not _early_use_sdk:
+                try:
+                    _early_use_sdk = (self._config or {}).get("agent_sdk", {}).get("enabled", False)
+                except Exception:
+                    pass
+
+            if _early_use_sdk:
+                runtime_kwargs = {}
+            else:
+                try:
+                    runtime_kwargs = _resolve_runtime_agent_kwargs()
+                except Exception as exc:
+                    return {
+                        "final_response": f"⚠️ Provider authentication failed: {exc}",
+                        "messages": [],
+                        "api_calls": 0,
+                        "tools": [],
+                    }
 
             pr = self._provider_routing
             reasoning_config = self._load_reasoning_config()
@@ -6432,50 +6444,51 @@ class GatewayRunner:
                 combined_ephemeral,
             )
             agent = None
-            _cache_lock = getattr(self, "_agent_cache_lock", None)
-            _cache = getattr(self, "_agent_cache", None)
-            if _cache_lock and _cache is not None:
-                with _cache_lock:
-                    cached = _cache.get(session_key)
-                    if cached and cached[1] == _sig:
-                        agent = cached[0]
-                        logger.debug("Reusing cached agent for session %s", session_key)
-
-            if agent is None:
-                # Config changed or first message — create fresh agent
-                agent = AIAgent(
-                    model=turn_route["model"],
-                    **turn_route["runtime"],
-                    max_iterations=max_iterations,
-                    quiet_mode=True,
-                    verbose_logging=False,
-                    enabled_toolsets=enabled_toolsets,
-                    ephemeral_system_prompt=combined_ephemeral or None,
-                    prefill_messages=self._prefill_messages or None,
-                    reasoning_config=reasoning_config,
-                    providers_allowed=pr.get("only"),
-                    providers_ignored=pr.get("ignore"),
-                    providers_order=pr.get("order"),
-                    provider_sort=pr.get("sort"),
-                    provider_require_parameters=pr.get("require_parameters", False),
-                    provider_data_collection=pr.get("data_collection"),
-                    session_id=session_id,
-                    platform=platform_key,
-                    session_db=self._session_db,
-                    fallback_model=self._fallback_model,
-                )
+            if not _early_use_sdk:
+                _cache_lock = getattr(self, "_agent_cache_lock", None)
+                _cache = getattr(self, "_agent_cache", None)
                 if _cache_lock and _cache is not None:
                     with _cache_lock:
-                        _cache[session_key] = (agent, _sig)
-                logger.debug("Created new agent for session %s (sig=%s)", session_key, _sig)
+                        cached = _cache.get(session_key)
+                        if cached and cached[1] == _sig:
+                            agent = cached[0]
+                            logger.debug("Reusing cached agent for session %s", session_key)
 
-            # Per-message state — callbacks and reasoning config change every
-            # turn and must not be baked into the cached agent constructor.
-            agent.tool_progress_callback = progress_callback if tool_progress_enabled else None
-            agent.step_callback = _step_callback_sync if _hooks_ref.loaded_hooks else None
-            agent.stream_delta_callback = _stream_delta_cb
-            agent.status_callback = _status_callback_sync
-            agent.reasoning_config = reasoning_config
+                if agent is None:
+                    # Config changed or first message — create fresh agent
+                    agent = AIAgent(
+                        model=turn_route["model"],
+                        **turn_route["runtime"],
+                        max_iterations=max_iterations,
+                        quiet_mode=True,
+                        verbose_logging=False,
+                        enabled_toolsets=enabled_toolsets,
+                        ephemeral_system_prompt=combined_ephemeral or None,
+                        prefill_messages=self._prefill_messages or None,
+                        reasoning_config=reasoning_config,
+                        providers_allowed=pr.get("only"),
+                        providers_ignored=pr.get("ignore"),
+                        providers_order=pr.get("order"),
+                        provider_sort=pr.get("sort"),
+                        provider_require_parameters=pr.get("require_parameters", False),
+                        provider_data_collection=pr.get("data_collection"),
+                        session_id=session_id,
+                        platform=platform_key,
+                        session_db=self._session_db,
+                        fallback_model=self._fallback_model,
+                    )
+                    if _cache_lock and _cache is not None:
+                        with _cache_lock:
+                            _cache[session_key] = (agent, _sig)
+                    logger.debug("Created new agent for session %s (sig=%s)", session_key, _sig)
+
+                # Per-message state — callbacks and reasoning config change every
+                # turn and must not be baked into the cached agent constructor.
+                agent.tool_progress_callback = progress_callback if tool_progress_enabled else None
+                agent.step_callback = _step_callback_sync if _hooks_ref.loaded_hooks else None
+                agent.stream_delta_callback = _stream_delta_cb
+                agent.status_callback = _status_callback_sync
+                agent.reasoning_config = reasoning_config
 
             # Background review delivery — send "💾 Memory updated" etc. to user
             def _bg_review_send(message: str) -> None:
@@ -6493,12 +6506,13 @@ class GatewayRunner:
                 except Exception as _e:
                     logger.debug("background_review_callback error: %s", _e)
 
-            agent.background_review_callback = _bg_review_send
+            if agent is not None:
+                agent.background_review_callback = _bg_review_send
 
             # Store agent reference for interrupt support
             agent_holder[0] = agent
             # Capture the full tool definitions for transcript logging
-            tools_holder[0] = agent.tools if hasattr(agent, 'tools') else None
+            tools_holder[0] = agent.tools if (agent is not None and hasattr(agent, 'tools')) else None
             
             # Convert history to agent format.
             # Two cases:
