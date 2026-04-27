@@ -164,50 +164,82 @@ class SDKAgentRunner:
         self._client = None
         self._sdk_session_id: Optional[str] = None
 
+        # Auto-load MemoryStore and TodoStore from config so the
+        # memory/todo MCP tools can read/write persistent state.
+        self._init_stores()
+        self._inject_memory_into_system_prompt()
+        self._inject_soul_into_system_prompt()
+
+    def _init_stores(self):
+        """Populate context with MemoryStore + TodoStore when enabled in config."""
+        if self._context.get("_memory_store") is None:
+            try:
+                from rhemify_cli.config import load_config
+                cfg = load_config()
+                mem_cfg = (cfg.get("agent") or {}).get("memory") or {}
+                if mem_cfg.get("memory_enabled") or mem_cfg.get("user_profile_enabled"):
+                    from tools.memory_tool import MemoryStore
+                    store = MemoryStore(
+                        memory_char_limit=int(mem_cfg.get("memory_char_limit", 2200)),
+                        user_char_limit=int(mem_cfg.get("user_char_limit", 1375)),
+                    )
+                    store.load_from_disk()
+                    self._context["_memory_store"] = store
+            except Exception as exc:
+                logger.debug("MemoryStore init skipped: %s", exc)
+
+        if self._context.get("_todo_store") is None:
+            try:
+                from tools.todo_tool import TodoStore
+                self._context["_todo_store"] = TodoStore()
+            except Exception as exc:
+                logger.debug("TodoStore init skipped: %s", exc)
+
+    def _inject_memory_into_system_prompt(self):
+        """Append memory snapshot blocks to the system prompt so the model sees them."""
+        store = self._context.get("_memory_store")
+        if store is None:
+            return
+        blocks = []
+        try:
+            mem_block = store.format_for_system_prompt("memory")
+            if mem_block:
+                blocks.append(mem_block)
+        except Exception:
+            pass
+        try:
+            user_block = store.format_for_system_prompt("user")
+            if user_block:
+                blocks.append(user_block)
+        except Exception:
+            pass
+        if blocks:
+            extra = "\n\n".join(blocks)
+            self._system_prompt = (self._system_prompt + "\n\n" + extra).strip() if self._system_prompt else extra
+
+    def _inject_soul_into_system_prompt(self):
+        """Read ~/.rhemify/SOUL.md (if present) and prepend persona instructions."""
+        try:
+            from rhemify_constants import get_rhemify_home
+            soul_path = get_rhemify_home() / "SOUL.md"
+            if soul_path.is_file():
+                soul = soul_path.read_text(encoding="utf-8").strip()
+                if soul:
+                    self._system_prompt = (soul + "\n\n" + self._system_prompt).strip() if self._system_prompt else soul
+        except Exception as exc:
+            logger.debug("SOUL.md load skipped: %s", exc)
+
     async def connect(self, initial_prompt: Optional[str] = None):
-        """Create and connect the ClaudeSDKClient subprocess."""
-        from claude_agent_sdk import ClaudeSDKClient, ClaudeAgentOptions, HookMatcher
-        from agent.sdk_tool_bridge import build_rhemify_mcp_servers, SDK_BUILTIN_OVERLAPS
-
-        skip = set(SDK_BUILTIN_OVERLAPS) if self._skip_duplicate_tools else set()
-        mcp_servers = build_rhemify_mcp_servers(context=self._context, skip_tools=skip)
-
-        # Build allowed_tools list — all MCP tools + SDK built-ins + Agent + AskUserQuestion
-        allowed_tools = ["mcp__rhemify_*__*"]  # wildcard for all rhemify MCP servers
-        if self._skip_duplicate_tools:
-            allowed_tools.extend([
-                "Read", "Write", "Edit", "Bash", "Glob", "Grep",
-                "WebSearch", "WebFetch",
-            ])
-        allowed_tools.extend(["Agent", "AskUserQuestion"])
-
-        options = ClaudeAgentOptions(
-            system_prompt=self._system_prompt or None,
-            permission_mode=self._permission_mode,
-            max_turns=self._max_turns,
-            model=self._model,
-            cwd=self._cwd,
-            mcp_servers=mcp_servers,
-            allowed_tools=allowed_tools,
-            hooks=_build_hooks(),
-            resume=self._resume_session_id,
-        )
-
-        self._client = ClaudeSDKClient(options=options)
-        await self._client.connect(prompt=initial_prompt)
+        """No-op: kept for compatibility. Each run_conversation() spawns its own subprocess."""
+        return None
 
     async def disconnect(self):
-        """Disconnect the subprocess."""
-        if self._client:
-            try:
-                await self._client.disconnect()
-            except Exception as exc:
-                logger.debug("Disconnect error: %s", exc)
-            self._client = None
+        """No-op: kept for compatibility."""
+        return None
 
     @property
     def sdk_session_id(self) -> Optional[str]:
-        """The SDK-managed session ID, captured from the init message."""
+        """The SDK-managed session ID from the most recent turn."""
         return self._sdk_session_id
 
     async def run_conversation(
@@ -219,32 +251,53 @@ class SDKAgentRunner:
     ) -> dict:
         """Send a message and collect the response.
 
-        Returns a dict matching the AIAgent.run_conversation() format::
+        Uses ``query()`` per call (not a persistent ClaudeSDKClient) so each
+        invocation is safe against ``asyncio.run()`` creating a fresh event
+        loop in the gateway thread. Multi-turn context is preserved by
+        passing the previous ``ResultMessage.session_id`` as ``resume``.
 
-            {
-                "final_response": str,
-                "messages": list,
-                "api_calls": int,
-                "completed": bool,
-                "sdk_session_id": str,
-                "cost_usd": float | None,
-            }
+        Returns a dict matching ``AIAgent.run_conversation()`` format.
         """
         from claude_agent_sdk import (
+            query as sdk_query,
+            ClaudeAgentOptions,
             AssistantMessage,
             ResultMessage,
             SystemMessage,
             TextBlock,
             ToolUseBlock,
         )
+        from agent.sdk_tool_bridge import build_rhemify_mcp_servers, SDK_BUILTIN_OVERLAPS
 
-        if not self._client:
-            await self.connect()
-
-        # Update context with any kwargs (task_id, etc.)
+        # Update context with any kwargs (task_id, etc.) before tool handlers fire
         self._context.update(kwargs)
 
-        await self._client.query(message)
+        skip = set(SDK_BUILTIN_OVERLAPS) if self._skip_duplicate_tools else set()
+        mcp_servers = build_rhemify_mcp_servers(context=self._context, skip_tools=skip)
+
+        allowed_tools = ["mcp__rhemify_*__*"]
+        if self._skip_duplicate_tools:
+            allowed_tools.extend([
+                "Read", "Write", "Edit", "Bash", "Glob", "Grep",
+                "WebSearch", "WebFetch",
+            ])
+        allowed_tools.extend(["Agent", "AskUserQuestion"])
+
+        # Resume the most recent SDK session if we have one — this preserves
+        # multi-turn conversation context across calls.
+        resume_id = self._sdk_session_id or self._resume_session_id
+
+        options = ClaudeAgentOptions(
+            system_prompt=self._system_prompt or None,
+            permission_mode=self._permission_mode,
+            max_turns=self._max_turns,
+            model=self._model,
+            cwd=self._cwd,
+            mcp_servers=mcp_servers,
+            allowed_tools=allowed_tools,
+            hooks=_build_hooks(),
+            resume=resume_id,
+        )
 
         collected_messages: List[dict] = []
         final_response = ""
@@ -252,7 +305,7 @@ class SDKAgentRunner:
         completed = True
         cost_usd = None
 
-        async for msg in self._client.receive_response():
+        async for msg in sdk_query(prompt=message, options=options):
             # Capture SDK session ID from init
             if isinstance(msg, SystemMessage) and getattr(msg, "subtype", "") == "init":
                 data = getattr(msg, "data", {}) or {}
