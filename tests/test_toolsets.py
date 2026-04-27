@@ -134,9 +134,9 @@ class TestToolsetConsistency:
             for inc in ts["includes"]:
                 assert inc in TOOLSETS, f"{name} includes unknown toolset '{inc}'"
 
-    def test_hermes_platforms_share_core_tools(self):
-        """All hermes-* platform toolsets should have the same tools."""
-        platforms = ["hermes-cli", "hermes-telegram", "hermes-discord", "hermes-whatsapp", "hermes-slack", "hermes-signal", "hermes-homeassistant"]
+    def test_rhemify_platforms_share_core_tools(self):
+        """All rhemify-* platform toolsets should have the same tools."""
+        platforms = ["rhemify-cli", "rhemify-telegram", "rhemify-discord", "rhemify-whatsapp", "rhemify-slack", "rhemify-signal", "rhemify-homeassistant"]
         tool_sets = [set(TOOLSETS[p]["tools"]) for p in platforms]
         # All platform toolsets should be identical
         for ts in tool_sets[1:]:

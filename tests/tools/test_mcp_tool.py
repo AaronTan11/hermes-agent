@@ -53,7 +53,7 @@ def _make_mock_server(name, session=None, tools=None):
 class TestLoadMCPConfig:
     def test_no_config_returns_empty(self):
         """No mcp_servers key in config -> empty dict."""
-        with patch("hermes_cli.config.load_config", return_value={"model": "test"}):
+        with patch("rhemify_cli.config.load_config", return_value={"model": "test"}):
             from tools.mcp_tool import _load_mcp_config
             result = _load_mcp_config()
             assert result == {}
@@ -67,7 +67,7 @@ class TestLoadMCPConfig:
                 "env": {},
             }
         }
-        with patch("hermes_cli.config.load_config", return_value={"mcp_servers": servers}):
+        with patch("rhemify_cli.config.load_config", return_value={"mcp_servers": servers}):
             from tools.mcp_tool import _load_mcp_config
             result = _load_mcp_config()
             assert "filesystem" in result
@@ -75,7 +75,7 @@ class TestLoadMCPConfig:
 
     def test_mcp_servers_not_dict_returns_empty(self):
         """mcp_servers set to non-dict value -> empty dict."""
-        with patch("hermes_cli.config.load_config", return_value={"mcp_servers": "invalid"}):
+        with patch("rhemify_cli.config.load_config", return_value={"mcp_servers": "invalid"}):
             from tools.mcp_tool import _load_mcp_config
             result = _load_mcp_config()
             assert result == {}
@@ -86,7 +86,7 @@ class TestLoadMCPConfig:
 # ---------------------------------------------------------------------------
 
 class TestSchemaConversion:
-    def test_converts_mcp_tool_to_hermes_schema(self):
+    def test_converts_mcp_tool_to_rhemify_schema(self):
         from tools.mcp_tool import _convert_mcp_schema
 
         mcp_tool = _make_mcp_tool(name="read_file", description="Read a file")
@@ -477,8 +477,8 @@ class TestMCPServerTask:
 # ---------------------------------------------------------------------------
 
 class TestToolsetInjection:
-    def test_mcp_tools_added_to_all_hermes_toolsets(self):
-        """Discovered MCP tools are dynamically injected into all hermes-* toolsets."""
+    def test_mcp_tools_added_to_all_rhemify_toolsets(self):
+        """Discovered MCP tools are dynamically injected into all rhemify-* toolsets."""
         from tools.mcp_tool import MCPServerTask
 
         mock_tools = [_make_mcp_tool("list_files", "List files")]
@@ -493,10 +493,10 @@ class TestToolsetInjection:
             return server
 
         fake_toolsets = {
-            "hermes-cli": {"tools": ["terminal"], "description": "CLI", "includes": []},
-            "hermes-telegram": {"tools": ["terminal"], "description": "TG", "includes": []},
-            "hermes-gateway": {"tools": [], "description": "GW", "includes": []},
-            "non-hermes": {"tools": [], "description": "other", "includes": []},
+            "rhemify-cli": {"tools": ["terminal"], "description": "CLI", "includes": []},
+            "rhemify-telegram": {"tools": ["terminal"], "description": "TG", "includes": []},
+            "rhemify-gateway": {"tools": [], "description": "GW", "includes": []},
+            "non-rhemify": {"tools": [], "description": "other", "includes": []},
         }
         fake_config = {"fs": {"command": "npx", "args": []}}
 
@@ -509,14 +509,14 @@ class TestToolsetInjection:
             result = discover_mcp_tools()
 
         assert "mcp_fs_list_files" in result
-        # All hermes-* toolsets get injection
-        assert "mcp_fs_list_files" in fake_toolsets["hermes-cli"]["tools"]
-        assert "mcp_fs_list_files" in fake_toolsets["hermes-telegram"]["tools"]
-        assert "mcp_fs_list_files" in fake_toolsets["hermes-gateway"]["tools"]
-        # Non-hermes toolset should NOT get injection
-        assert "mcp_fs_list_files" not in fake_toolsets["non-hermes"]["tools"]
+        # All rhemify-* toolsets get injection
+        assert "mcp_fs_list_files" in fake_toolsets["rhemify-cli"]["tools"]
+        assert "mcp_fs_list_files" in fake_toolsets["rhemify-telegram"]["tools"]
+        assert "mcp_fs_list_files" in fake_toolsets["rhemify-gateway"]["tools"]
+        # Non-rhemify toolset should NOT get injection
+        assert "mcp_fs_list_files" not in fake_toolsets["non-rhemify"]["tools"]
         # Original tools preserved
-        assert "terminal" in fake_toolsets["hermes-cli"]["tools"]
+        assert "terminal" in fake_toolsets["rhemify-cli"]["tools"]
         # Server name becomes a standalone toolset
         assert "fs" in fake_toolsets
         assert "mcp_fs_list_files" in fake_toolsets["fs"]["tools"]
@@ -537,7 +537,7 @@ class TestToolsetInjection:
             return server
 
         fake_toolsets = {
-            "hermes-cli": {"tools": ["terminal"], "description": "CLI", "includes": []},
+            "rhemify-cli": {"tools": ["terminal"], "description": "CLI", "includes": []},
             # Built-in toolset named "terminal" — must not be overwritten
             "terminal": {"tools": ["terminal"], "description": "Terminal tools", "includes": []},
         }
@@ -579,7 +579,7 @@ class TestToolsetInjection:
             "good": {"command": "npx", "args": []},
         }
         fake_toolsets = {
-            "hermes-cli": {"tools": [], "description": "CLI", "includes": []},
+            "rhemify-cli": {"tools": [], "description": "CLI", "includes": []},
         }
 
         with patch("tools.mcp_tool._MCP_AVAILABLE", True), \
@@ -621,7 +621,7 @@ class TestToolsetInjection:
             "good": {"command": "npx", "args": []},
         }
         fake_toolsets = {
-            "hermes-cli": {"tools": [], "description": "CLI", "includes": []},
+            "rhemify-cli": {"tools": [], "description": "CLI", "includes": []},
         }
 
         with patch("tools.mcp_tool._MCP_AVAILABLE", True), \
@@ -2738,7 +2738,7 @@ class TestMCPSelectiveToolLoading:
             }
         }
         fake_toolsets = {
-            "hermes-cli": {"tools": [], "description": "CLI", "includes": []},
+            "rhemify-cli": {"tools": [], "description": "CLI", "includes": []},
         }
 
         with patch("tools.mcp_tool._MCP_AVAILABLE", True), \

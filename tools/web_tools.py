@@ -3,8 +3,8 @@
 Standalone Web Tools Module
 
 This module provides generic web tools that work with multiple backend providers.
-Backend is selected during ``hermes tools`` setup (web.backend in config.yaml).
-When available, Hermes can route Firecrawl calls through a Nous-hosted tool-gateway
+Backend is selected during ``rhemify tools`` setup (web.backend in config.yaml).
+When available, Rhemify can route Firecrawl calls through a Nous-hosted tool-gateway
 for Nous Subscribers only.
 
 Available tools:
@@ -59,7 +59,7 @@ from tools.managed_tool_gateway import (
     read_nous_access_token as _read_nous_access_token,
     resolve_managed_tool_gateway,
 )
-from tools.tool_backend_helpers import managed_nous_tools_enabled
+from tools.tool_backend_helpers import managed_tools_enabled
 from tools.url_safety import is_safe_url
 from tools.website_policy import check_website_access
 
@@ -73,9 +73,9 @@ def _has_env(name: str) -> bool:
     return bool(val and val.strip())
 
 def _load_web_config() -> dict:
-    """Load the ``web:`` section from ~/.hermes/config.yaml."""
+    """Load the ``web:`` section from ~/.rhemify/config.yaml."""
     try:
-        from hermes_cli.config import load_config
+        from rhemify_cli.config import load_config
         return load_config().get("web", {})
     except (ImportError, Exception):
         return {}
@@ -83,7 +83,7 @@ def _load_web_config() -> dict:
 def _get_backend() -> str:
     """Determine which web backend to use.
 
-    Reads ``web.backend`` from config.yaml (set by ``hermes tools``).
+    Reads ``web.backend`` from config.yaml (set by ``rhemify tools``).
     Falls back to whichever API key is present for users who configured
     keys manually without running setup.
     """
@@ -163,17 +163,17 @@ def _raise_web_backend_configuration_error() -> None:
         "Web tools are not configured. "
         "Set FIRECRAWL_API_KEY for cloud Firecrawl or set FIRECRAWL_API_URL for a self-hosted Firecrawl instance."
     )
-    if managed_nous_tools_enabled():
+    if managed_tools_enabled():
         message += (
             " If you have the hidden Nous-managed tools flag enabled, you can also login to Nous "
-            "(`hermes model`) and provide FIRECRAWL_GATEWAY_URL or TOOL_GATEWAY_DOMAIN."
+            "(`rhemify model`) and provide FIRECRAWL_GATEWAY_URL or TOOL_GATEWAY_DOMAIN."
         )
     raise ValueError(message)
 
 
 def _firecrawl_backend_help_suffix() -> str:
     """Return optional managed-gateway guidance for Firecrawl help text."""
-    if not managed_nous_tools_enabled():
+    if not managed_tools_enabled():
         return ""
     return (
         ", or, if you have the hidden Nous-managed tools flag enabled, login to Nous and use "
@@ -190,7 +190,7 @@ def _web_requires_env() -> list[str]:
         "FIRECRAWL_API_KEY",
         "FIRECRAWL_API_URL",
     ]
-    if managed_nous_tools_enabled():
+    if managed_tools_enabled():
         requires.extend(
             [
                 "FIRECRAWL_GATEWAY_URL",
@@ -206,7 +206,7 @@ def _get_firecrawl_client():
     """Get or create Firecrawl client.
 
     Direct Firecrawl takes precedence when explicitly configured. Otherwise
-    Hermes falls back to the Firecrawl tool-gateway for logged-in Nous Subscribers.
+    Rhemify falls back to the Firecrawl tool-gateway for logged-in Nous Subscribers.
     """
     global _firecrawl_client, _firecrawl_client_config
 
@@ -444,12 +444,12 @@ def _extract_scrape_payload(scrape_result: Any) -> Dict[str, Any]:
 DEFAULT_MIN_LENGTH_FOR_SUMMARIZATION = 5000
 
 def _is_nous_auxiliary_client(client: Any) -> bool:
-    """Return True when the resolved auxiliary backend is Nous Portal."""
+    """Return True when the resolved auxiliary backend is Provider."""
     from urllib.parse import urlparse
 
     base_url = str(getattr(client, "base_url", "") or "")
     host = (urlparse(base_url).hostname or "").lower()
-    return host == "nousresearch.com" or host.endswith(".nousresearch.com")
+    return host == "example.com" or host.endswith(".example.com")
 
 
 def _resolve_web_extract_auxiliary(model: Optional[str] = None) -> tuple[Optional[Any], Optional[str], Dict[str, Any]]:
@@ -461,7 +461,7 @@ def _resolve_web_extract_auxiliary(model: Optional[str] = None) -> tuple[Optiona
     extra_body: Dict[str, Any] = {}
     if client is not None and _is_nous_auxiliary_client(client):
         from agent.auxiliary_client import get_auxiliary_extra_body
-        extra_body = get_auxiliary_extra_body() or {"tags": ["product=hermes-agent"]}
+        extra_body = get_auxiliary_extra_body() or {"tags": ["product=rhemify"]}
 
     return client, effective_model, extra_body
 
@@ -889,7 +889,7 @@ def _get_exa_client():
                 "Get your API key at https://exa.ai"
             )
         _exa_client = Exa(api_key=api_key)
-        _exa_client.headers["x-exa-integration"] = "hermes-agent"
+        _exa_client.headers["x-exa-integration"] = "rhemify"
     return _exa_client
 
 
@@ -1977,7 +1977,7 @@ if __name__ == "__main__":
 
     if not nous_available:
         print("❌ No auxiliary model available for LLM content processing")
-        print("Set OPENROUTER_API_KEY, configure Nous Portal, or set OPENAI_BASE_URL + OPENAI_API_KEY")
+        print("Set OPENROUTER_API_KEY, configure Provider, or set OPENAI_BASE_URL + OPENAI_API_KEY")
         print("⚠️  Without an auxiliary model, LLM content processing will be disabled")
     else:
         print(f"✅ Auxiliary model available: {default_summarizer_model}")

@@ -1,30 +1,30 @@
-"""Base class for all Hermes execution environment backends."""
+"""Base class for all Rhemify execution environment backends."""
 
 from abc import ABC, abstractmethod
 import os
 import subprocess
 from pathlib import Path
 
-from hermes_constants import get_hermes_home
+from rhemify_constants import get_rhemify_home
 
 
 def get_sandbox_dir() -> Path:
     """Return the host-side root for all sandbox storage (Docker workspaces,
     Singularity overlays/SIF cache, etc.).
 
-    Configurable via TERMINAL_SANDBOX_DIR. Defaults to {HERMES_HOME}/sandboxes/.
+    Configurable via TERMINAL_SANDBOX_DIR. Defaults to {RHEMIFY_HOME}/sandboxes/.
     """
     custom = os.getenv("TERMINAL_SANDBOX_DIR")
     if custom:
         p = Path(custom)
     else:
-        p = get_hermes_home() / "sandboxes"
+        p = get_rhemify_home() / "sandboxes"
     p.mkdir(parents=True, exist_ok=True)
     return p
 
 
 class BaseEnvironment(ABC):
-    """Common interface for all Hermes execution backends.
+    """Common interface for all Rhemify execution backends.
 
     Subclasses implement execute() and cleanup(). Shared helpers eliminate
     duplicated subprocess boilerplate across backends.

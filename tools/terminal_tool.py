@@ -18,7 +18,7 @@ Features:
 
 Cloud sandbox note:
 - Persistent filesystems preserve working state across sandbox recreation
-- Persistent filesystems do NOT guarantee the same live sandbox or long-running processes survive cleanup, idle reaping, or Hermes exit
+- Persistent filesystems do NOT guarantee the same live sandbox or long-running processes survive cleanup, idle reaping, or Rhemify exit
 
 Usage:
     from terminal_tool import terminal_tool
@@ -53,7 +53,7 @@ logger = logging.getLogger(__name__)
 # long-running subprocesses immediately instead of blocking until timeout.
 # ---------------------------------------------------------------------------
 from tools.interrupt import is_interrupted, _interrupt_event  # noqa: F401 — re-exported
-# display_hermes_home imported lazily at call site (stale-module safety during hermes update)
+# display_rhemify_home imported lazily at call site (stale-module safety during rhemify update)
 
 
 def ensure_minisweagent_on_path(_repo_root: Path | None = None) -> None:
@@ -70,7 +70,7 @@ from tools.environments.singularity import _get_scratch_dir
 from tools.tool_backend_helpers import (
     coerce_modal_mode,
     has_direct_modal_credentials,
-    managed_nous_tools_enabled,
+    managed_tools_enabled,
     resolve_modal_backend_state,
 )
 
@@ -84,10 +84,10 @@ def _check_disk_usage_warning():
     try:
         scratch_dir = _get_scratch_dir()
 
-        # Get total size of hermes directories
+        # Get total size of rhemify directories
         total_bytes = 0
         import glob
-        for path in glob.glob(str(scratch_dir / "hermes-*")):
+        for path in glob.glob(str(scratch_dir / "rhemify-*")):
             for f in Path(path).rglob('*'):
                 if f.is_file():
                     try:
@@ -160,7 +160,7 @@ def _handle_sudo_failure(output: str, env_type: str) -> str:
     
     Returns enhanced output if sudo failed in messaging context, else original.
     """
-    is_gateway = os.getenv("HERMES_GATEWAY_SESSION")
+    is_gateway = os.getenv("RHEMIFY_GATEWAY_SESSION")
     
     if not is_gateway:
         return output
@@ -174,7 +174,7 @@ def _handle_sudo_failure(output: str, env_type: str) -> str:
     
     for failure in sudo_failures:
         if failure in output:
-            from hermes_constants import display_hermes_home as _dhh
+            from rhemify_constants import display_rhemify_home as _dhh
             return output + f"\n\n💡 Tip: To enable sudo over messaging, add SUDO_PASSWORD to {_dhh()}/.env on the agent machine."
     
     return output
@@ -189,7 +189,7 @@ def _prompt_for_sudo_password(timeout_seconds: int = 45) -> str:
     - Timeout expires (45s default)
     - Any error occurs
     
-    Only works in interactive mode (HERMES_INTERACTIVE=1).
+    Only works in interactive mode (RHEMIFY_INTERACTIVE=1).
     If a _sudo_password_callback is registered (by the CLI), delegates to it
     so the prompt integrates with prompt_toolkit's UI.  Otherwise reads
     directly from /dev/tty with echo disabled.
@@ -255,7 +255,7 @@ def _prompt_for_sudo_password(timeout_seconds: int = 45) -> str:
             result["done"] = True
     
     try:
-        os.environ["HERMES_SPINNER_PAUSE"] = "1"
+        os.environ["RHEMIFY_SPINNER_PAUSE"] = "1"
         time_module.sleep(0.2)
         
         print()
@@ -301,8 +301,8 @@ def _prompt_for_sudo_password(timeout_seconds: int = 45) -> str:
         sys.stdout.flush()
         return ""
     finally:
-        if "HERMES_SPINNER_PAUSE" in os.environ:
-            del os.environ["HERMES_SPINNER_PAUSE"]
+        if "RHEMIFY_SPINNER_PAUSE" in os.environ:
+            del os.environ["RHEMIFY_SPINNER_PAUSE"]
 
 
 def _transform_sudo_command(command: str) -> tuple[str, str | None]:
@@ -333,7 +333,7 @@ def _transform_sudo_command(command: str) -> tuple[str, str | None]:
     password in the command string themselves; see their execute() methods for
     how they handle the non-None sudo_stdin case.
 
-    If SUDO_PASSWORD is not set and in interactive mode (HERMES_INTERACTIVE=1):
+    If SUDO_PASSWORD is not set and in interactive mode (RHEMIFY_INTERACTIVE=1):
       Prompts user for password with 45s timeout, caches for session.
 
     If SUDO_PASSWORD is not set and NOT interactive:
@@ -351,7 +351,7 @@ def _transform_sudo_command(command: str) -> tuple[str, str | None]:
 
     if not sudo_password:
         # No password configured - check if we're in interactive mode
-        if os.getenv("HERMES_INTERACTIVE"):
+        if os.getenv("RHEMIFY_INTERACTIVE"):
             # Prompt user for password
             sudo_password = _prompt_for_sudo_password(timeout_seconds=45)
             if sudo_password:
@@ -464,7 +464,7 @@ def _parse_env_var(name: str, default: str, converter=int, type_label: str = "in
     except (ValueError, json.JSONDecodeError):
         raise ValueError(
             f"Invalid value for {name}: {raw!r} (expected {type_label}). "
-            f"Check ~/.hermes/.env or environment variables."
+            f"Check ~/.rhemify/.env or environment variables."
         )
 
 
@@ -637,7 +637,7 @@ def _create_environment(env_type: str, image: str, cwd: str, timeout: int,
             if modal_state["managed_mode_blocked"]:
                 raise ValueError(
                     "Modal backend is configured for managed mode, but "
-                    "HERMES_ENABLE_NOUS_MANAGED_TOOLS is not enabled and no direct "
+                    "RHEMIFY_ENABLE_NOUS_MANAGED_TOOLS is not enabled and no direct "
                     "Modal credentials/config were found. Enable the feature flag or "
                     "choose TERMINAL_MODAL_MODE=direct/auto."
                 )
@@ -650,7 +650,7 @@ def _create_environment(env_type: str, image: str, cwd: str, timeout: int,
                     "Modal backend is configured for direct mode, but no direct Modal credentials/config were found."
                 )
             message = "Modal backend selected but no direct Modal credentials/config was found."
-            if managed_nous_tools_enabled():
+            if managed_tools_enabled():
                 message = (
                     "Modal backend selected but no direct Modal credentials/config or managed tool gateway was found."
                 )
@@ -803,7 +803,7 @@ def get_active_environments_info() -> Dict[str, Any]:
     total_size = 0
     for task_id in _active_environments.keys():
         scratch_dir = _get_scratch_dir()
-        pattern = f"hermes-*{task_id[:8]}*"
+        pattern = f"rhemify-*{task_id[:8]}*"
         import glob
         for path in glob.glob(str(scratch_dir / pattern)):
             try:
@@ -833,7 +833,7 @@ def cleanup_all_environments():
     # Also clean any orphaned directories
     scratch_dir = _get_scratch_dir()
     import glob
-    for path in glob.glob(str(scratch_dir / "hermes-*")):
+    for path in glob.glob(str(scratch_dir / "rhemify-*")):
         try:
             shutil.rmtree(path, ignore_errors=True)
             logger.info("Removed orphaned: %s", path)
@@ -1220,9 +1220,9 @@ def terminal_tool(
                         result_data["check_interval_note"] = (
                             f"Requested {check_interval}s raised to minimum 30s"
                         )
-                    watcher_platform = os.getenv("HERMES_SESSION_PLATFORM", "")
-                    watcher_chat_id = os.getenv("HERMES_SESSION_CHAT_ID", "")
-                    watcher_thread_id = os.getenv("HERMES_SESSION_THREAD_ID", "")
+                    watcher_platform = os.getenv("RHEMIFY_SESSION_PLATFORM", "")
+                    watcher_chat_id = os.getenv("RHEMIFY_SESSION_CHAT_ID", "")
+                    watcher_thread_id = os.getenv("RHEMIFY_SESSION_THREAD_ID", "")
 
                     # Store on session for checkpoint persistence
                     proc_session.watcher_platform = watcher_platform
@@ -1387,7 +1387,7 @@ def check_terminal_requirements() -> bool:
                 if modal_state["managed_mode_blocked"]:
                     logger.error(
                         "Modal backend selected with TERMINAL_MODAL_MODE=managed, but "
-                        "HERMES_ENABLE_NOUS_MANAGED_TOOLS is not enabled and no direct "
+                        "RHEMIFY_ENABLE_NOUS_MANAGED_TOOLS is not enabled and no direct "
                         "Modal credentials/config were found. Enable the feature flag "
                         "or choose TERMINAL_MODAL_MODE=direct/auto."
                     )
@@ -1400,7 +1400,7 @@ def check_terminal_requirements() -> bool:
                     )
                     return False
                 elif modal_state["mode"] == "direct":
-                    if managed_nous_tools_enabled():
+                    if managed_tools_enabled():
                         logger.error(
                             "Modal backend selected with TERMINAL_MODAL_MODE=direct, but no direct "
                             "Modal credentials/config were found. Configure Modal or choose "
@@ -1414,7 +1414,7 @@ def check_terminal_requirements() -> bool:
                         )
                     return False
                 else:
-                    if managed_nous_tools_enabled():
+                    if managed_tools_enabled():
                         logger.error(
                             "Modal backend selected but no direct Modal credentials/config or managed "
                             "tool gateway was found. Configure Modal, set up the managed gateway, "
@@ -1486,7 +1486,7 @@ if __name__ == "__main__":
     print(f"  TERMINAL_MODAL_IMAGE: {os.getenv('TERMINAL_MODAL_IMAGE', default_img)}")
     print(f"  TERMINAL_DAYTONA_IMAGE: {os.getenv('TERMINAL_DAYTONA_IMAGE', default_img)}")
     print(f"  TERMINAL_CWD: {os.getenv('TERMINAL_CWD', os.getcwd())}")
-    from hermes_constants import display_hermes_home as _dhh
+    from rhemify_constants import display_rhemify_home as _dhh
     print(f"  TERMINAL_SANDBOX_DIR: {os.getenv('TERMINAL_SANDBOX_DIR', f'{_dhh()}/sandboxes')}")
     print(f"  TERMINAL_TIMEOUT: {os.getenv('TERMINAL_TIMEOUT', '60')}")
     print(f"  TERMINAL_LIFETIME_SECONDS: {os.getenv('TERMINAL_LIFETIME_SECONDS', '300')}")

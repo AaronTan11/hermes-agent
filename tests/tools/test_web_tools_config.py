@@ -26,7 +26,7 @@ class TestFirecrawlClientConfig:
         tools.web_tools._firecrawl_client = None
         tools.web_tools._firecrawl_client_config = None
         for key in (
-            "HERMES_ENABLE_NOUS_MANAGED_TOOLS",
+            "RHEMIFY_ENABLE_NOUS_MANAGED_TOOLS",
             "FIRECRAWL_API_KEY",
             "FIRECRAWL_API_URL",
             "FIRECRAWL_GATEWAY_URL",
@@ -35,7 +35,7 @@ class TestFirecrawlClientConfig:
             "TOOL_GATEWAY_USER_TOKEN",
         ):
             os.environ.pop(key, None)
-        os.environ["HERMES_ENABLE_NOUS_MANAGED_TOOLS"] = "1"
+        os.environ["RHEMIFY_ENABLE_NOUS_MANAGED_TOOLS"] = "1"
 
     def teardown_method(self):
         """Reset client after each test."""
@@ -43,7 +43,7 @@ class TestFirecrawlClientConfig:
         tools.web_tools._firecrawl_client = None
         tools.web_tools._firecrawl_client_config = None
         for key in (
-            "HERMES_ENABLE_NOUS_MANAGED_TOOLS",
+            "RHEMIFY_ENABLE_NOUS_MANAGED_TOOLS",
             "FIRECRAWL_API_KEY",
             "FIRECRAWL_API_URL",
             "FIRECRAWL_GATEWAY_URL",
@@ -97,21 +97,21 @@ class TestFirecrawlClientConfig:
 
     def test_tool_gateway_domain_builds_firecrawl_gateway_origin(self):
         """Shared gateway domain should derive the Firecrawl vendor hostname."""
-        with patch.dict(os.environ, {"TOOL_GATEWAY_DOMAIN": "nousresearch.com"}):
+        with patch.dict(os.environ, {"TOOL_GATEWAY_DOMAIN": "example.com"}):
             with patch("tools.web_tools._read_nous_access_token", return_value="nous-token"):
                 with patch("tools.web_tools.Firecrawl") as mock_fc:
                     from tools.web_tools import _get_firecrawl_client
                     result = _get_firecrawl_client()
                     mock_fc.assert_called_once_with(
                         api_key="nous-token",
-                        api_url="https://firecrawl-gateway.nousresearch.com",
+                        api_url="https://firecrawl-gateway.example.com",
                     )
                     assert result is mock_fc.return_value
 
     def test_tool_gateway_scheme_can_switch_derived_gateway_origin_to_http(self):
         """Shared gateway scheme should allow local plain-http vendor hosts."""
         with patch.dict(os.environ, {
-            "TOOL_GATEWAY_DOMAIN": "nousresearch.com",
+            "TOOL_GATEWAY_DOMAIN": "example.com",
             "TOOL_GATEWAY_SCHEME": "http",
         }):
             with patch("tools.web_tools._read_nous_access_token", return_value="nous-token"):
@@ -120,14 +120,14 @@ class TestFirecrawlClientConfig:
                     result = _get_firecrawl_client()
                     mock_fc.assert_called_once_with(
                         api_key="nous-token",
-                        api_url="http://firecrawl-gateway.nousresearch.com",
+                        api_url="http://firecrawl-gateway.example.com",
                     )
                     assert result is mock_fc.return_value
 
     def test_invalid_tool_gateway_scheme_raises(self):
         """Unexpected shared gateway schemes should fail fast."""
         with patch.dict(os.environ, {
-            "TOOL_GATEWAY_DOMAIN": "nousresearch.com",
+            "TOOL_GATEWAY_DOMAIN": "example.com",
             "TOOL_GATEWAY_SCHEME": "ftp",
         }):
             with patch("tools.web_tools._read_nous_access_token", return_value="nous-token"):
@@ -139,7 +139,7 @@ class TestFirecrawlClientConfig:
         """An explicit Firecrawl gateway origin should override the shared domain."""
         with patch.dict(os.environ, {
             "FIRECRAWL_GATEWAY_URL": "https://firecrawl-gateway.localhost:3009/",
-            "TOOL_GATEWAY_DOMAIN": "nousresearch.com",
+            "TOOL_GATEWAY_DOMAIN": "example.com",
         }):
             with patch("tools.web_tools._read_nous_access_token", return_value="nous-token"):
                 with patch("tools.web_tools.Firecrawl") as mock_fc:
@@ -158,14 +158,14 @@ class TestFirecrawlClientConfig:
                 _get_firecrawl_client()
                 mock_fc.assert_called_once_with(
                     api_key="nous-token",
-                    api_url="https://firecrawl-gateway.nousresearch.com",
+                    api_url="https://firecrawl-gateway.example.com",
                 )
 
     def test_direct_mode_is_preferred_over_tool_gateway(self):
         """Explicit Firecrawl config should win over the gateway fallback."""
         with patch.dict(os.environ, {
             "FIRECRAWL_API_KEY": "fc-test",
-            "TOOL_GATEWAY_DOMAIN": "nousresearch.com",
+            "TOOL_GATEWAY_DOMAIN": "example.com",
         }):
             with patch("tools.web_tools._read_nous_access_token", return_value="nous-token"):
                 with patch("tools.web_tools.Firecrawl") as mock_fc:
@@ -173,16 +173,16 @@ class TestFirecrawlClientConfig:
                     _get_firecrawl_client()
                 mock_fc.assert_called_once_with(api_key="fc-test")
 
-    def test_nous_auth_token_respects_hermes_home_override(self, tmp_path):
-        """Auth lookup should read from HERMES_HOME/auth.json, not ~/.hermes/auth.json."""
+    def test_nous_auth_token_respects_rhemify_home_override(self, tmp_path):
+        """Auth lookup should read from RHEMIFY_HOME/auth.json, not ~/.rhemify/auth.json."""
         real_home = tmp_path / "real-home"
-        (real_home / ".hermes").mkdir(parents=True)
+        (real_home / ".rhemify").mkdir(parents=True)
 
-        hermes_home = tmp_path / "hermes-home"
-        hermes_home.mkdir()
-        (hermes_home / "auth.json").write_text(json.dumps({
+        rhemify_home = tmp_path / "rhemify-home"
+        rhemify_home.mkdir()
+        (rhemify_home / "auth.json").write_text(json.dumps({
             "providers": {
-                "nous": {
+                "unused": {
                     "access_token": "nous-token",
                 }
             }
@@ -190,7 +190,7 @@ class TestFirecrawlClientConfig:
 
         with patch.dict(os.environ, {
             "HOME": str(real_home),
-            "HERMES_HOME": str(hermes_home),
+            "RHEMIFY_HOME": str(rhemify_home),
         }, clear=False):
             import tools.web_tools
             importlib.reload(tools.web_tools)
@@ -293,12 +293,12 @@ class TestBackendSelection:
     """Test suite for _get_backend() backend selection logic.
 
     The backend is configured via config.yaml (web.backend), set by
-    ``hermes tools``.  Falls back to key-based detection for legacy/manual
+    ``rhemify tools``.  Falls back to key-based detection for legacy/manual
     setups.
     """
 
     _ENV_KEYS = (
-        "HERMES_ENABLE_NOUS_MANAGED_TOOLS",
+        "RHEMIFY_ENABLE_NOUS_MANAGED_TOOLS",
         "EXA_API_KEY",
         "PARALLEL_API_KEY",
         "FIRECRAWL_API_KEY",
@@ -311,9 +311,9 @@ class TestBackendSelection:
     )
 
     def setup_method(self):
-        os.environ["HERMES_ENABLE_NOUS_MANAGED_TOOLS"] = "1"
+        os.environ["RHEMIFY_ENABLE_NOUS_MANAGED_TOOLS"] = "1"
         for key in self._ENV_KEYS:
-            if key != "HERMES_ENABLE_NOUS_MANAGED_TOOLS":
+            if key != "RHEMIFY_ENABLE_NOUS_MANAGED_TOOLS":
                 os.environ.pop(key, None)
 
     def teardown_method(self):
@@ -523,7 +523,7 @@ class TestCheckWebApiKey:
     """Test suite for check_web_api_key() unified availability check."""
 
     _ENV_KEYS = (
-        "HERMES_ENABLE_NOUS_MANAGED_TOOLS",
+        "RHEMIFY_ENABLE_NOUS_MANAGED_TOOLS",
         "EXA_API_KEY",
         "PARALLEL_API_KEY",
         "FIRECRAWL_API_KEY",
@@ -536,9 +536,9 @@ class TestCheckWebApiKey:
     )
 
     def setup_method(self):
-        os.environ["HERMES_ENABLE_NOUS_MANAGED_TOOLS"] = "1"
+        os.environ["RHEMIFY_ENABLE_NOUS_MANAGED_TOOLS"] = "1"
         for key in self._ENV_KEYS:
-            if key != "HERMES_ENABLE_NOUS_MANAGED_TOOLS":
+            if key != "RHEMIFY_ENABLE_NOUS_MANAGED_TOOLS":
                 os.environ.pop(key, None)
 
     def teardown_method(self):

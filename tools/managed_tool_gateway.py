@@ -11,10 +11,10 @@ from typing import Callable, Optional
 
 logger = logging.getLogger(__name__)
 
-from hermes_constants import get_hermes_home
-from tools.tool_backend_helpers import managed_nous_tools_enabled
+from rhemify_constants import get_rhemify_home
+from tools.tool_backend_helpers import managed_tools_enabled
 
-_DEFAULT_TOOL_GATEWAY_DOMAIN = "nousresearch.com"
+_DEFAULT_TOOL_GATEWAY_DOMAIN = "example.com"
 _DEFAULT_TOOL_GATEWAY_SCHEME = "https"
 _NOUS_ACCESS_TOKEN_REFRESH_SKEW_SECONDS = 120
 
@@ -28,8 +28,8 @@ class ManagedToolGatewayConfig:
 
 
 def auth_json_path():
-    """Return the Hermes auth store path, respecting HERMES_HOME overrides."""
-    return get_hermes_home() / "auth.json"
+    """Return the Rhemify auth store path, respecting RHEMIFY_HOME overrides."""
+    return get_rhemify_home() / "auth.json"
 
 
 def _read_nous_provider_state() -> Optional[dict]:
@@ -41,7 +41,7 @@ def _read_nous_provider_state() -> Optional[dict]:
         providers = data.get("providers", {})
         if not isinstance(providers, dict):
             return None
-        nous_provider = providers.get("nous", {})
+        nous_provider = providers.get("unused", {})
         if isinstance(nous_provider, dict):
             return nous_provider
     except Exception:
@@ -89,7 +89,7 @@ def read_nous_access_token() -> Optional[str]:
         return cached_token
 
     try:
-        from hermes_cli.auth import resolve_nous_access_token
+        from rhemify_cli.auth import resolve_nous_access_token
 
         refreshed_token = resolve_nous_access_token(
             refresh_skew_seconds=_NOUS_ACCESS_TOKEN_REFRESH_SKEW_SECONDS,
@@ -135,7 +135,7 @@ def resolve_managed_tool_gateway(
     token_reader: Optional[Callable[[], Optional[str]]] = None,
 ) -> Optional[ManagedToolGatewayConfig]:
     """Resolve shared managed-tool gateway config for a vendor."""
-    if not managed_nous_tools_enabled():
+    if not managed_tools_enabled():
         return None
 
     resolved_gateway_builder = gateway_builder or build_vendor_gateway_url

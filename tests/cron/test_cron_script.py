@@ -4,7 +4,7 @@ Tests cover:
 - Script field in job creation / storage / update
 - Script execution and output injection into prompts
 - Error handling (missing script, timeout, non-zero exit)
-- Path resolution (absolute, relative to HERMES_HOME/scripts/)
+- Path resolution (absolute, relative to RHEMIFY_HOME/scripts/)
 """
 
 import json
@@ -23,22 +23,22 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 @pytest.fixture
 def cron_env(tmp_path, monkeypatch):
-    """Isolated cron environment with temp HERMES_HOME."""
-    hermes_home = tmp_path / ".hermes"
-    hermes_home.mkdir()
-    (hermes_home / "cron").mkdir()
-    (hermes_home / "cron" / "output").mkdir()
-    (hermes_home / "scripts").mkdir()
-    monkeypatch.setenv("HERMES_HOME", str(hermes_home))
+    """Isolated cron environment with temp RHEMIFY_HOME."""
+    rhemify_home = tmp_path / ".rhemify"
+    rhemify_home.mkdir()
+    (rhemify_home / "cron").mkdir()
+    (rhemify_home / "cron" / "output").mkdir()
+    (rhemify_home / "scripts").mkdir()
+    monkeypatch.setenv("RHEMIFY_HOME", str(rhemify_home))
 
     # Clear cached module-level paths
     import cron.jobs as jobs_mod
-    monkeypatch.setattr(jobs_mod, "HERMES_DIR", hermes_home)
-    monkeypatch.setattr(jobs_mod, "CRON_DIR", hermes_home / "cron")
-    monkeypatch.setattr(jobs_mod, "JOBS_FILE", hermes_home / "cron" / "jobs.json")
-    monkeypatch.setattr(jobs_mod, "OUTPUT_DIR", hermes_home / "cron" / "output")
+    monkeypatch.setattr(jobs_mod, "RHEMIFY_DIR", rhemify_home)
+    monkeypatch.setattr(jobs_mod, "CRON_DIR", rhemify_home / "cron")
+    monkeypatch.setattr(jobs_mod, "JOBS_FILE", rhemify_home / "cron" / "jobs.json")
+    monkeypatch.setattr(jobs_mod, "OUTPUT_DIR", rhemify_home / "cron" / "output")
 
-    return hermes_home
+    return rhemify_home
 
 
 class TestJobScriptField:
@@ -232,7 +232,7 @@ class TestCronjobToolScript:
     """Test the cronjob tool's script parameter."""
 
     def test_create_with_script(self, cron_env, monkeypatch):
-        monkeypatch.setenv("HERMES_INTERACTIVE", "1")
+        monkeypatch.setenv("RHEMIFY_INTERACTIVE", "1")
         from tools.cronjob_tools import cronjob
 
         result = json.loads(cronjob(
@@ -245,7 +245,7 @@ class TestCronjobToolScript:
         assert result["job"]["script"] == "/home/user/monitor.py"
 
     def test_update_script(self, cron_env, monkeypatch):
-        monkeypatch.setenv("HERMES_INTERACTIVE", "1")
+        monkeypatch.setenv("RHEMIFY_INTERACTIVE", "1")
         from tools.cronjob_tools import cronjob
 
         create_result = json.loads(cronjob(
@@ -264,7 +264,7 @@ class TestCronjobToolScript:
         assert update_result["job"]["script"] == "/new/script.py"
 
     def test_clear_script(self, cron_env, monkeypatch):
-        monkeypatch.setenv("HERMES_INTERACTIVE", "1")
+        monkeypatch.setenv("RHEMIFY_INTERACTIVE", "1")
         from tools.cronjob_tools import cronjob
 
         create_result = json.loads(cronjob(
@@ -284,7 +284,7 @@ class TestCronjobToolScript:
         assert "script" not in update_result["job"]
 
     def test_list_shows_script(self, cron_env, monkeypatch):
-        monkeypatch.setenv("HERMES_INTERACTIVE", "1")
+        monkeypatch.setenv("RHEMIFY_INTERACTIVE", "1")
         from tools.cronjob_tools import cronjob
 
         cronjob(

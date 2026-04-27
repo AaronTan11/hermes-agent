@@ -4,11 +4,11 @@ import time
 from types import SimpleNamespace
 from unittest.mock import MagicMock
 
-from cli import HermesCLI
+from cli import RhemifyCLI
 
 
 def _make_cli_stub():
-    cli = HermesCLI.__new__(HermesCLI)
+    cli = RhemifyCLI.__new__(RhemifyCLI)
     cli._approval_state = None
     cli._approval_deadline = 0
     cli._approval_lock = threading.Lock()

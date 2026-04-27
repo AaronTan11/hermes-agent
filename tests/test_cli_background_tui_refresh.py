@@ -10,12 +10,12 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from cli import HermesCLI
+from cli import RhemifyCLI
 
 
 def _make_cli():
-    """Create a minimal HermesCLI instance for testing."""
-    cli_obj = HermesCLI.__new__(HermesCLI)
+    """Create a minimal RhemifyCLI instance for testing."""
+    cli_obj = RhemifyCLI.__new__(RhemifyCLI)
     cli_obj.model = "test-model"
     cli_obj._background_tasks = {}
     cli_obj._background_task_counter = 0

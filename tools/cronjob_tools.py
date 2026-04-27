@@ -1,5 +1,5 @@
 """
-Cron job management tools for Hermes Agent.
+Cron job management tools for Rhemify.
 
 Expose a single compressed action-oriented tool to avoid schema/context bloat.
 Compatibility wrappers remain for direct Python callers and legacy tests.
@@ -64,14 +64,14 @@ def _scan_cron_prompt(prompt: str) -> str:
 
 
 def _origin_from_env() -> Optional[Dict[str, str]]:
-    origin_platform = os.getenv("HERMES_SESSION_PLATFORM")
-    origin_chat_id = os.getenv("HERMES_SESSION_CHAT_ID")
+    origin_platform = os.getenv("RHEMIFY_SESSION_PLATFORM")
+    origin_chat_id = os.getenv("RHEMIFY_SESSION_CHAT_ID")
     if origin_platform and origin_chat_id:
         return {
             "platform": origin_platform,
             "chat_id": origin_chat_id,
-            "chat_name": os.getenv("HERMES_SESSION_CHAT_NAME"),
-            "thread_id": os.getenv("HERMES_SESSION_THREAD_ID"),
+            "chat_name": os.getenv("RHEMIFY_SESSION_CHAT_NAME"),
+            "thread_id": os.getenv("RHEMIFY_SESSION_THREAD_ID"),
         }
     return None
 
@@ -418,7 +418,7 @@ Important safety rule: cron-run sessions should not recursively schedule more cr
             },
             "script": {
                 "type": "string",
-                "description": "Optional path to a Python script that runs before each cron job execution. Its stdout is injected into the prompt as context. Use for data collection and change detection. Relative paths resolve under ~/.hermes/scripts/. On update, pass empty string to clear."
+                "description": "Optional path to a Python script that runs before each cron job execution. Its stdout is injected into the prompt as context. Use for data collection and change detection. Relative paths resolve under ~/.rhemify/scripts/. On update, pass empty string to clear."
             }
         },
         "required": ["action"]
@@ -435,9 +435,9 @@ def check_cronjob_requirements() -> bool:
     so no external crontab executable is required.
     """
     return bool(
-        os.getenv("HERMES_INTERACTIVE")
-        or os.getenv("HERMES_GATEWAY_SESSION")
-        or os.getenv("HERMES_EXEC_ASK")
+        os.getenv("RHEMIFY_INTERACTIVE")
+        or os.getenv("RHEMIFY_GATEWAY_SESSION")
+        or os.getenv("RHEMIFY_EXEC_ASK")
     )
 
 

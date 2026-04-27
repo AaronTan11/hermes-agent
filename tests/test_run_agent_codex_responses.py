@@ -182,7 +182,7 @@ class _FakeCreateStream:
 def _codex_request_kwargs():
     return {
         "model": "gpt-5-codex",
-        "instructions": "You are Hermes.",
+        "instructions": "You are Rhemify.",
         "input": [{"role": "user", "content": "Ping"}],
         "tools": None,
         "store": False,
@@ -241,13 +241,13 @@ def test_build_api_kwargs_codex(monkeypatch):
     agent = _build_agent(monkeypatch)
     kwargs = agent._build_api_kwargs(
         [
-            {"role": "system", "content": "You are Hermes."},
+            {"role": "system", "content": "You are Rhemify."},
             {"role": "user", "content": "Ping"},
         ]
     )
 
     assert kwargs["model"] == "gpt-5-codex"
-    assert kwargs["instructions"] == "You are Hermes."
+    assert kwargs["instructions"] == "You are Rhemify."
     assert kwargs["store"] is False
     assert isinstance(kwargs["input"], list)
     assert kwargs["input"][0]["role"] == "user"
@@ -434,7 +434,7 @@ def test_try_refresh_codex_client_credentials_rebuilds_client(monkeypatch):
         return _RebuiltClient()
 
     monkeypatch.setattr(
-        "hermes_cli.auth.resolve_codex_runtime_credentials",
+        "rhemify_cli.auth.resolve_codex_runtime_credentials",
         lambda force_refresh=True: {
             "api_key": "new-codex-token",
             "base_url": "https://chatgpt.com/backend-api/codex",
@@ -538,7 +538,7 @@ def test_preflight_codex_api_kwargs_strips_optional_function_call_id(monkeypatch
     preflight = agent._preflight_codex_api_kwargs(
         {
             "model": "gpt-5-codex",
-            "instructions": "You are Hermes.",
+            "instructions": "You are Rhemify.",
             "input": [
                 {"role": "user", "content": "hi"},
                 {
@@ -566,7 +566,7 @@ def test_preflight_codex_api_kwargs_rejects_function_call_output_without_call_id
         agent._preflight_codex_api_kwargs(
             {
                 "model": "gpt-5-codex",
-                "instructions": "You are Hermes.",
+                "instructions": "You are Rhemify.",
                 "input": [{"type": "function_call_output", "output": "{}"}],
                 "tools": [],
                 "store": False,
@@ -717,7 +717,7 @@ def test_run_conversation_codex_continues_after_ack_stop_message(monkeypatch):
     agent = _build_agent(monkeypatch)
     responses = [
         _codex_ack_message_response(
-            "Absolutely — I can do that. I'll inspect ~/openclaw-studio and report back with a walkthrough."
+            "Absolutely — I can do that. I'll inspect ~/upstream-studio and report back with a walkthrough."
         ),
         _codex_tool_call_response(),
         _codex_message_response("Architecture summary complete."),
@@ -736,14 +736,14 @@ def test_run_conversation_codex_continues_after_ack_stop_message(monkeypatch):
 
     monkeypatch.setattr(agent, "_execute_tool_calls", _fake_execute_tool_calls)
 
-    result = agent.run_conversation("look into ~/openclaw-studio and tell me how it works")
+    result = agent.run_conversation("look into ~/upstream-studio and tell me how it works")
 
     assert result["completed"] is True
     assert result["final_response"] == "Architecture summary complete."
     assert any(
         msg.get("role") == "assistant"
         and msg.get("finish_reason") == "incomplete"
-        and "inspect ~/openclaw-studio" in (msg.get("content") or "")
+        and "inspect ~/upstream-studio" in (msg.get("content") or "")
         for msg in result["messages"]
     )
     assert any(

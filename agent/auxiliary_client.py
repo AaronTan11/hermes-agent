@@ -6,7 +6,7 @@ the best available backend without duplicating fallback logic.
 
 Resolution order for text tasks (auto mode):
   1. OpenRouter  (OPENROUTER_API_KEY)
-  2. Nous Portal (~/.hermes/auth.json active provider)
+  2. Provider (~/.rhemify/auth.json active provider)
   3. Custom endpoint (config.yaml model.base_url + OPENAI_API_KEY)
   4. Codex OAuth (Responses API via chatgpt.com with gpt-5.3-codex,
      wrapped to look like a chat.completions client)
@@ -17,7 +17,7 @@ Resolution order for text tasks (auto mode):
 Resolution order for vision/multimodal tasks (auto mode):
   1. Selected main provider, if it is one of the supported vision backends below
   2. OpenRouter
-  3. Nous Portal
+  3. Provider
   4. Codex OAuth (gpt-5.3-codex supports vision via Responses API)
   5. Native Anthropic
   6. Custom endpoint (for local vision models: Qwen-VL, LLaVA, Pixtral, etc.)
@@ -48,8 +48,8 @@ from typing import Any, Dict, List, Optional, Tuple
 from openai import OpenAI
 
 from agent.credential_pool import load_pool
-from hermes_cli.config import get_hermes_home
-from hermes_constants import OPENROUTER_BASE_URL
+from rhemify_cli.config import get_rhemify_home
+from rhemify_constants import OPENROUTER_BASE_URL
 
 logger = logging.getLogger(__name__)
 
@@ -68,25 +68,25 @@ _API_KEY_PROVIDER_AUX_MODELS: Dict[str, str] = {
 
 # OpenRouter app attribution headers
 _OR_HEADERS = {
-    "HTTP-Referer": "https://hermes-agent.nousresearch.com",
-    "X-OpenRouter-Title": "Hermes Agent",
+    "HTTP-Referer": "https://rhemify.local",
+    "X-OpenRouter-Title": "Rhemify",
     "X-OpenRouter-Categories": "productivity,cli-agent",
 }
 
-# Nous Portal extra_body for product attribution.
+# Provider extra_body for product attribution.
 # Callers should pass this as extra_body in chat.completions.create()
-# when the auxiliary client is backed by Nous Portal.
-NOUS_EXTRA_BODY = {"tags": ["product=hermes-agent"]}
+# when the auxiliary client is backed by Provider.
+NOUS_EXTRA_BODY = {"tags": ["product=rhemify"]}
 
-# Set at resolve time — True if the auxiliary client points to Nous Portal
+# Set at resolve time — True if the auxiliary client points to Provider
 auxiliary_is_nous: bool = False
 
 # Default auxiliary models per provider
 _OPENROUTER_MODEL = "google/gemini-3-flash-preview"
 _NOUS_MODEL = "google/gemini-3-flash-preview"
-_NOUS_DEFAULT_BASE_URL = "https://inference-api.nousresearch.com/v1"
+_NOUS_DEFAULT_BASE_URL = "https://inference-api.example.com/v1"
 _ANTHROPIC_DEFAULT_BASE_URL = "https://api.anthropic.com"
-_AUTH_JSON_PATH = get_hermes_home() / "auth.json"
+_AUTH_JSON_PATH = get_rhemify_home() / "auth.json"
 
 # Codex fallback: uses the Responses API (the only endpoint the Codex
 # OAuth token can access) with a fast model for auxiliary tasks.
@@ -474,12 +474,12 @@ class AsyncAnthropicAuxiliaryClient:
 
 
 def _read_nous_auth() -> Optional[dict]:
-    """Read and validate ~/.hermes/auth.json for an active Nous provider.
+    """Read and validate ~/.rhemify/auth.json for an active Nous provider.
 
     Returns the provider state dict if Nous is active with tokens,
     otherwise None.
     """
-    pool_present, entry = _select_pool_entry("nous")
+    pool_present, entry = _select_pool_entry("unused")
     if pool_present:
         if entry is None:
             return None
@@ -499,9 +499,9 @@ def _read_nous_auth() -> Optional[dict]:
         if not _AUTH_JSON_PATH.is_file():
             return None
         data = json.loads(_AUTH_JSON_PATH.read_text())
-        if data.get("active_provider") != "nous":
+        if data.get("active_provider") != "unused":
             return None
-        provider = data.get("providers", {}).get("nous", {})
+        provider = data.get("providers", {}).get("unused", {})
         # Must have at least an access_token or agent_key
         if not provider.get("agent_key") and not provider.get("access_token"):
             return None
@@ -522,14 +522,14 @@ def _nous_base_url() -> str:
 
 
 def _read_codex_access_token() -> Optional[str]:
-    """Read a valid, non-expired Codex OAuth access token from Hermes auth store."""
+    """Read a valid, non-expired Codex OAuth access token from Rhemify auth store."""
     pool_present, entry = _select_pool_entry("openai-codex")
     if pool_present:
         token = _pool_runtime_api_key(entry)
         return token or None
 
     try:
-        from hermes_cli.auth import _read_codex_tokens
+        from rhemify_cli.auth import _read_codex_tokens
         data = _read_codex_tokens()
         tokens = data.get("tokens", {})
         access_token = tokens.get("access_token")
@@ -563,7 +563,7 @@ def _resolve_api_key_provider() -> Tuple[Optional[OpenAI], Optional[str]]:
     credentials, or (None, None) if none are configured.
     """
     try:
-        from hermes_cli.auth import PROVIDER_REGISTRY, resolve_api_key_provider_credentials
+        from rhemify_cli.auth import PROVIDER_REGISTRY, resolve_api_key_provider_credentials
     except ImportError:
         logger.debug("Could not import PROVIDER_REGISTRY for API-key fallback")
         return None, None
@@ -587,7 +587,7 @@ def _resolve_api_key_provider() -> Tuple[Optional[OpenAI], Optional[str]]:
             if "api.kimi.com" in base_url.lower():
                 extra["default_headers"] = {"User-Agent": "KimiCLI/1.0"}
             elif "api.githubcopilot.com" in base_url.lower():
-                from hermes_cli.models import copilot_default_headers
+                from rhemify_cli.models import copilot_default_headers
 
                 extra["default_headers"] = copilot_default_headers()
             return OpenAI(api_key=api_key, base_url=base_url, **extra), model
@@ -604,7 +604,7 @@ def _resolve_api_key_provider() -> Tuple[Optional[OpenAI], Optional[str]]:
         if "api.kimi.com" in base_url.lower():
             extra["default_headers"] = {"User-Agent": "KimiCLI/1.0"}
         elif "api.githubcopilot.com" in base_url.lower():
-            from hermes_cli.models import copilot_default_headers
+            from rhemify_cli.models import copilot_default_headers
 
             extra["default_headers"] = copilot_default_headers()
         return OpenAI(api_key=api_key, base_url=base_url, **extra), model
@@ -619,7 +619,7 @@ def _get_auxiliary_provider(task: str = "") -> str:
 
     Checks AUXILIARY_{TASK}_PROVIDER first (e.g. AUXILIARY_VISION_PROVIDER),
     then CONTEXT_{TASK}_PROVIDER (for the compression section's summary_provider),
-    then falls back to "auto".  Returns one of: "auto", "openrouter", "nous", "main".
+    then falls back to "auto".  Returns one of: "auto", "openrouter", "unused", "main".
     """
     if task:
         for prefix in ("AUXILIARY_", "CONTEXT_"):
@@ -665,7 +665,7 @@ def _try_nous() -> Tuple[Optional[OpenAI], Optional[str]]:
         return None, None
     global auxiliary_is_nous
     auxiliary_is_nous = True
-    logger.debug("Auxiliary client: Nous Portal")
+    logger.debug("Auxiliary client: Provider")
     model = "gemini-3-flash" if nous.get("source") == "pool" else _NOUS_MODEL
     return (
         OpenAI(
@@ -683,7 +683,7 @@ def _read_main_model() -> str:
     model. Environment variables are no longer consulted.
     """
     try:
-        from hermes_cli.config import load_config
+        from rhemify_cli.config import load_config
         cfg = load_config()
         model_cfg = cfg.get("model", {})
         if isinstance(model_cfg, str) and model_cfg.strip():
@@ -704,7 +704,7 @@ def _read_main_provider() -> str:
     if not configured.
     """
     try:
-        from hermes_cli.config import load_config
+        from rhemify_cli.config import load_config
         cfg = load_config()
         model_cfg = cfg.get("model", {})
         if isinstance(model_cfg, dict):
@@ -724,7 +724,7 @@ def _resolve_custom_runtime() -> Tuple[Optional[str], Optional[str]]:
     environment.
     """
     try:
-        from hermes_cli.runtime_provider import resolve_runtime_provider
+        from rhemify_cli.runtime_provider import resolve_runtime_provider
 
         runtime = resolve_runtime_provider(requested="custom")
     except Exception as exc:
@@ -805,7 +805,7 @@ def _try_anthropic() -> Tuple[Optional[Any], Optional[str]]:
     # base_url (e.g. Codex endpoint) would leak into Anthropic requests.
     base_url = _pool_runtime_base_url(entry, _ANTHROPIC_DEFAULT_BASE_URL) if pool_present else _ANTHROPIC_DEFAULT_BASE_URL
     try:
-        from hermes_cli.config import load_config
+        from rhemify_cli.config import load_config
         cfg = load_config()
         model_cfg = cfg.get("model")
         if isinstance(model_cfg, dict):
@@ -839,16 +839,16 @@ def _resolve_forced_provider(forced: str) -> Tuple[Optional[OpenAI], Optional[st
             logger.warning("auxiliary.provider=openrouter but OPENROUTER_API_KEY not set")
         return client, model
 
-    if forced == "nous":
+    if forced == "unused":
         client, model = _try_nous()
         if client is None:
-            logger.warning("auxiliary.provider=nous but Nous Portal not configured (run: hermes login)")
+            logger.warning("auxiliary.provider=nous but Provider not configured (run: rhemify login)")
         return client, model
 
     if forced == "codex":
         client, model = _try_codex()
         if client is None:
-            logger.warning("auxiliary.provider=codex but no Codex OAuth token found (run: hermes model)")
+            logger.warning("auxiliary.provider=codex but no Codex OAuth token found (run: rhemify model)")
         return client, model
 
     if forced == "main":
@@ -867,14 +867,14 @@ def _resolve_forced_provider(forced: str) -> Tuple[Optional[OpenAI], Optional[st
 
 _AUTO_PROVIDER_LABELS = {
     "_try_openrouter": "openrouter",
-    "_try_nous": "nous",
+    "_try_nous": "unused",
     "_try_custom_endpoint": "local/custom",
     "_try_codex": "openai-codex",
     "_resolve_api_key_provider": "api-key",
 }
 
 
-_AGGREGATOR_PROVIDERS = frozenset({"openrouter", "nous"})
+_AGGREGATOR_PROVIDERS = frozenset({"openrouter", "unused"})
 
 
 def _resolve_auto() -> Tuple[Optional[OpenAI], Optional[str]]:
@@ -952,7 +952,7 @@ def _to_async_client(sync_client, model: str):
     if "openrouter" in base_lower:
         async_kwargs["default_headers"] = dict(_OR_HEADERS)
     elif "api.githubcopilot.com" in base_lower:
-        from hermes_cli.models import copilot_default_headers
+        from rhemify_cli.models import copilot_default_headers
 
         async_kwargs["default_headers"] = copilot_default_headers()
     elif "api.kimi.com" in base_lower:
@@ -977,7 +977,7 @@ def resolve_provider_client(
 
     Args:
         provider: Provider identifier.  One of:
-            "openrouter", "nous", "openai-codex" (or "codex"),
+            "openrouter", "unused", "openai-codex" (or "codex"),
             "zai", "kimi-coding", "minimax", "minimax-cn",
             "custom" (OPENAI_BASE_URL + OPENAI_API_KEY),
             "auto" (full auto-detection chain).
@@ -1030,12 +1030,12 @@ def resolve_provider_client(
         return (_to_async_client(client, final_model) if async_mode
                 else (client, final_model))
 
-    # ── Nous Portal (OAuth) ──────────────────────────────────────────
-    if provider == "nous":
+    # ── Provider (OAuth) ──────────────────────────────────────────
+    if provider == "unused":
         client, default = _try_nous()
         if client is None:
             logger.warning("resolve_provider_client: nous requested "
-                           "but Nous Portal not configured (run: hermes login)")
+                           "but Provider not configured (run: rhemify login)")
             return None, None
         final_model = model or default
         return (_to_async_client(client, final_model) if async_mode
@@ -1049,7 +1049,7 @@ def resolve_provider_client(
             codex_token = _read_codex_access_token()
             if not codex_token:
                 logger.warning("resolve_provider_client: openai-codex requested "
-                               "but no Codex OAuth token found (run: hermes model)")
+                               "but no Codex OAuth token found (run: rhemify model)")
                 return None, None
             final_model = model or _CODEX_AUX_MODEL
             raw_client = OpenAI(api_key=codex_token, base_url=_CODEX_AUX_BASE_URL)
@@ -1058,7 +1058,7 @@ def resolve_provider_client(
         client, default = _try_codex()
         if client is None:
             logger.warning("resolve_provider_client: openai-codex requested "
-                           "but no Codex OAuth token found (run: hermes model)")
+                           "but no Codex OAuth token found (run: rhemify model)")
             return None, None
         final_model = model or default
         return (_to_async_client(client, final_model) if async_mode
@@ -1097,9 +1097,9 @@ def resolve_provider_client(
 
     # ── API-key providers from PROVIDER_REGISTRY ─────────────────────
     try:
-        from hermes_cli.auth import PROVIDER_REGISTRY, resolve_api_key_provider_credentials
+        from rhemify_cli.auth import PROVIDER_REGISTRY, resolve_api_key_provider_credentials
     except ImportError:
-        logger.debug("hermes_cli.auth not available for provider %s", provider)
+        logger.debug("rhemify_cli.auth not available for provider %s", provider)
         return None, None
 
     pconfig = PROVIDER_REGISTRY.get(provider)
@@ -1137,7 +1137,7 @@ def resolve_provider_client(
         if "api.kimi.com" in base_url.lower():
             headers["User-Agent"] = "KimiCLI/1.0"
         elif "api.githubcopilot.com" in base_url.lower():
-            from hermes_cli.models import copilot_default_headers
+            from rhemify_cli.models import copilot_default_headers
 
             headers.update(copilot_default_headers())
 
@@ -1149,8 +1149,8 @@ def resolve_provider_client(
 
     elif pconfig.auth_type in ("oauth_device_code", "oauth_external"):
         # OAuth providers — route through their specific try functions
-        if provider == "nous":
-            return resolve_provider_client("nous", model, async_mode)
+        if provider == "unused":
+            return resolve_provider_client("unused", model, async_mode)
         if provider == "openai-codex":
             return resolve_provider_client("openai-codex", model, async_mode)
         # Other OAuth providers not directly supported
@@ -1203,7 +1203,7 @@ def get_async_text_auxiliary_client(task: str = ""):
 
 _VISION_AUTO_PROVIDER_ORDER = (
     "openrouter",
-    "nous",
+    "unused",
     "openai-codex",
     "anthropic",
     "custom",
@@ -1223,7 +1223,7 @@ def _resolve_strict_vision_backend(provider: str) -> Tuple[Optional[Any], Option
     provider = _normalize_vision_provider(provider)
     if provider == "openrouter":
         return _try_openrouter()
-    if provider == "nous":
+    if provider == "unused":
         return _try_nous()
     if provider == "openai-codex":
         return _try_codex()
@@ -1241,7 +1241,7 @@ def _strict_vision_backend_available(provider: str) -> bool:
 def _preferred_main_vision_provider() -> Optional[str]:
     """Return the selected main provider when it is also a supported vision backend."""
     try:
-        from hermes_cli.config import load_config
+        from rhemify_cli.config import load_config
 
         config = load_config()
         model_cfg = config.get("model", {})
@@ -1259,7 +1259,7 @@ def get_available_vision_backends() -> List[str]:
 
     This is the single source of truth for setup, tool gating, and runtime
     auto-routing of vision tasks. The selected main provider is preferred when
-    it is also a known-good vision backend; otherwise Hermes falls back through
+    it is also a known-good vision backend; otherwise Rhemify falls back through
     the standard conservative order.
     """
     ordered = list(_VISION_AUTO_PROVIDER_ORDER)
@@ -1350,8 +1350,8 @@ def get_async_vision_auxiliary_client():
 def get_auxiliary_extra_body() -> dict:
     """Return extra_body kwargs for auxiliary API calls.
     
-    Includes Nous Portal product tags when the auxiliary client is backed
-    by Nous Portal. Returns empty dict otherwise.
+    Includes Provider product tags when the auxiliary client is backed
+    by Provider. Returns empty dict otherwise.
     """
     return dict(NOUS_EXTRA_BODY) if auxiliary_is_nous else {}
 
@@ -1581,7 +1581,7 @@ def _resolve_task_provider_model(
 
     if task:
         try:
-            from hermes_cli.config import load_config
+            from rhemify_cli.config import load_config
             config = load_config()
         except ImportError:
             config = {}
@@ -1641,7 +1641,7 @@ def _get_task_timeout(task: str, default: float = _DEFAULT_AUX_TIMEOUT) -> float
     if not task:
         return default
     try:
-        from hermes_cli.config import load_config
+        from rhemify_cli.config import load_config
         config = load_config()
     except ImportError:
         return default
@@ -1694,8 +1694,8 @@ def _build_call_kwargs(
 
     # Provider-specific extra_body
     merged_extra = dict(extra_body or {})
-    if provider == "nous" or auxiliary_is_nous:
-        merged_extra.setdefault("tags", []).extend(["product=hermes-agent"])
+    if provider == "unused" or auxiliary_is_nous:
+        merged_extra.setdefault("tags", []).extend(["product=rhemify"])
     if merged_extra:
         kwargs["extra_body"] = merged_extra
 
@@ -1764,7 +1764,7 @@ def call_llm(
         if client is None:
             raise RuntimeError(
                 f"No LLM provider configured for task={task} provider={resolved_provider}. "
-                f"Run: hermes setup"
+                f"Run: rhemify setup"
             )
         resolved_provider = effective_provider or resolved_provider
     else:
@@ -1783,7 +1783,7 @@ def call_llm(
                 raise RuntimeError(
                     f"Provider '{_explicit}' is set in config.yaml but no API key "
                     f"was found. Set the {_explicit.upper()}_API_KEY environment "
-                    f"variable, or switch to a different provider with `hermes model`."
+                    f"variable, or switch to a different provider with `rhemify model`."
                 )
             # For auto/custom, fall back to OpenRouter
             if not resolved_base_url:
@@ -1794,7 +1794,7 @@ def call_llm(
         if client is None:
             raise RuntimeError(
                 f"No LLM provider configured for task={task} provider={resolved_provider}. "
-                f"Run: hermes setup")
+                f"Run: rhemify setup")
 
     effective_timeout = timeout if timeout is not None else _get_task_timeout(task)
 
@@ -1921,7 +1921,7 @@ async def async_call_llm(
         if client is None:
             raise RuntimeError(
                 f"No LLM provider configured for task={task} provider={resolved_provider}. "
-                f"Run: hermes setup"
+                f"Run: rhemify setup"
             )
         resolved_provider = effective_provider or resolved_provider
     else:
@@ -1938,7 +1938,7 @@ async def async_call_llm(
                 raise RuntimeError(
                     f"Provider '{_explicit}' is set in config.yaml but no API key "
                     f"was found. Set the {_explicit.upper()}_API_KEY environment "
-                    f"variable, or switch to a different provider with `hermes model`."
+                    f"variable, or switch to a different provider with `rhemify model`."
                 )
             if not resolved_base_url:
                 logger.warning("Provider %s unavailable, falling back to openrouter",
@@ -1949,7 +1949,7 @@ async def async_call_llm(
         if client is None:
             raise RuntimeError(
                 f"No LLM provider configured for task={task} provider={resolved_provider}. "
-                f"Run: hermes setup")
+                f"Run: rhemify setup")
 
     effective_timeout = timeout if timeout is not None else _get_task_timeout(task)
 

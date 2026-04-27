@@ -1,4 +1,4 @@
-"""Tests for the Hermes plugin system (hermes_cli.plugins)."""
+"""Tests for the Rhemify plugin system (rhemify_cli.plugins)."""
 
 import logging
 import os
@@ -10,7 +10,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 import yaml
 
-from hermes_cli.plugins import (
+from rhemify_cli.plugins import (
     ENTRY_POINTS_GROUP,
     VALID_HOOKS,
     LoadedPlugin,
@@ -51,10 +51,10 @@ class TestPluginDiscovery:
     """Tests for plugin discovery from directories and entry points."""
 
     def test_discover_user_plugins(self, tmp_path, monkeypatch):
-        """Plugins in ~/.hermes/plugins/ are discovered."""
-        plugins_dir = tmp_path / "hermes_test" / "plugins"
+        """Plugins in ~/.rhemify/plugins/ are discovered."""
+        plugins_dir = tmp_path / "rhemify_test" / "plugins"
         _make_plugin_dir(plugins_dir, "hello_plugin")
-        monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes_test"))
+        monkeypatch.setenv("RHEMIFY_HOME", str(tmp_path / "rhemify_test"))
 
         mgr = PluginManager()
         mgr.discover_and_load()
@@ -63,12 +63,12 @@ class TestPluginDiscovery:
         assert mgr._plugins["hello_plugin"].enabled
 
     def test_discover_project_plugins(self, tmp_path, monkeypatch):
-        """Plugins in ./.hermes/plugins/ are discovered."""
+        """Plugins in ./.rhemify/plugins/ are discovered."""
         project_dir = tmp_path / "project"
         project_dir.mkdir()
         monkeypatch.chdir(project_dir)
-        monkeypatch.setenv("HERMES_ENABLE_PROJECT_PLUGINS", "true")
-        plugins_dir = project_dir / ".hermes" / "plugins"
+        monkeypatch.setenv("RHEMIFY_ENABLE_PROJECT_PLUGINS", "true")
+        plugins_dir = project_dir / ".rhemify" / "plugins"
         _make_plugin_dir(plugins_dir, "proj_plugin")
 
         mgr = PluginManager()
@@ -82,7 +82,7 @@ class TestPluginDiscovery:
         project_dir = tmp_path / "project"
         project_dir.mkdir()
         monkeypatch.chdir(project_dir)
-        plugins_dir = project_dir / ".hermes" / "plugins"
+        plugins_dir = project_dir / ".rhemify" / "plugins"
         _make_plugin_dir(plugins_dir, "proj_plugin")
 
         mgr = PluginManager()
@@ -92,9 +92,9 @@ class TestPluginDiscovery:
 
     def test_discover_is_idempotent(self, tmp_path, monkeypatch):
         """Calling discover_and_load() twice does not duplicate plugins."""
-        plugins_dir = tmp_path / "hermes_test" / "plugins"
+        plugins_dir = tmp_path / "rhemify_test" / "plugins"
         _make_plugin_dir(plugins_dir, "once_plugin")
-        monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes_test"))
+        monkeypatch.setenv("RHEMIFY_HOME", str(tmp_path / "rhemify_test"))
 
         mgr = PluginManager()
         mgr.discover_and_load()
@@ -104,9 +104,9 @@ class TestPluginDiscovery:
 
     def test_discover_skips_dir_without_manifest(self, tmp_path, monkeypatch):
         """Directories without plugin.yaml are silently skipped."""
-        plugins_dir = tmp_path / "hermes_test" / "plugins"
+        plugins_dir = tmp_path / "rhemify_test" / "plugins"
         (plugins_dir / "no_manifest").mkdir(parents=True)
-        monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes_test"))
+        monkeypatch.setenv("RHEMIFY_HOME", str(tmp_path / "rhemify_test"))
 
         mgr = PluginManager()
         mgr.discover_and_load()
@@ -115,7 +115,7 @@ class TestPluginDiscovery:
 
     def test_entry_points_scanned(self, tmp_path, monkeypatch):
         """Entry-point based plugins are discovered (mocked)."""
-        monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes_test"))
+        monkeypatch.setenv("RHEMIFY_HOME", str(tmp_path / "rhemify_test"))
 
         fake_module = types.ModuleType("fake_ep_plugin")
         fake_module.register = lambda ctx: None  # type: ignore[attr-defined]
@@ -146,11 +146,11 @@ class TestPluginLoading:
 
     def test_load_missing_init(self, tmp_path, monkeypatch):
         """Plugin dir without __init__.py records an error."""
-        plugins_dir = tmp_path / "hermes_test" / "plugins"
+        plugins_dir = tmp_path / "rhemify_test" / "plugins"
         plugin_dir = plugins_dir / "bad_plugin"
         plugin_dir.mkdir(parents=True)
         (plugin_dir / "plugin.yaml").write_text(yaml.dump({"name": "bad_plugin"}))
-        monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes_test"))
+        monkeypatch.setenv("RHEMIFY_HOME", str(tmp_path / "rhemify_test"))
 
         mgr = PluginManager()
         mgr.discover_and_load()
@@ -161,12 +161,12 @@ class TestPluginLoading:
 
     def test_load_missing_register_fn(self, tmp_path, monkeypatch):
         """Plugin without register() function records an error."""
-        plugins_dir = tmp_path / "hermes_test" / "plugins"
+        plugins_dir = tmp_path / "rhemify_test" / "plugins"
         plugin_dir = plugins_dir / "no_reg"
         plugin_dir.mkdir(parents=True)
         (plugin_dir / "plugin.yaml").write_text(yaml.dump({"name": "no_reg"}))
         (plugin_dir / "__init__.py").write_text("# no register function\n")
-        monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes_test"))
+        monkeypatch.setenv("RHEMIFY_HOME", str(tmp_path / "rhemify_test"))
 
         mgr = PluginManager()
         mgr.discover_and_load()
@@ -176,18 +176,18 @@ class TestPluginLoading:
         assert "no register()" in mgr._plugins["no_reg"].error
 
     def test_load_registers_namespace_module(self, tmp_path, monkeypatch):
-        """Directory plugins are importable under hermes_plugins.<name>."""
-        plugins_dir = tmp_path / "hermes_test" / "plugins"
+        """Directory plugins are importable under rhemify_plugins.<name>."""
+        plugins_dir = tmp_path / "rhemify_test" / "plugins"
         _make_plugin_dir(plugins_dir, "ns_plugin")
-        monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes_test"))
+        monkeypatch.setenv("RHEMIFY_HOME", str(tmp_path / "rhemify_test"))
 
         # Clean up any prior namespace module
-        sys.modules.pop("hermes_plugins.ns_plugin", None)
+        sys.modules.pop("rhemify_plugins.ns_plugin", None)
 
         mgr = PluginManager()
         mgr.discover_and_load()
 
-        assert "hermes_plugins.ns_plugin" in sys.modules
+        assert "rhemify_plugins.ns_plugin" in sys.modules
 
 
 # ── TestPluginHooks ────────────────────────────────────────────────────────
@@ -202,12 +202,12 @@ class TestPluginHooks:
 
     def test_register_and_invoke_hook(self, tmp_path, monkeypatch):
         """Registered hooks are called on invoke_hook()."""
-        plugins_dir = tmp_path / "hermes_test" / "plugins"
+        plugins_dir = tmp_path / "rhemify_test" / "plugins"
         _make_plugin_dir(
             plugins_dir, "hook_plugin",
             register_body='ctx.register_hook("pre_tool_call", lambda **kw: None)',
         )
-        monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes_test"))
+        monkeypatch.setenv("RHEMIFY_HOME", str(tmp_path / "rhemify_test"))
 
         mgr = PluginManager()
         mgr.discover_and_load()
@@ -217,12 +217,12 @@ class TestPluginHooks:
 
     def test_hook_exception_does_not_propagate(self, tmp_path, monkeypatch):
         """A hook callback that raises does NOT crash the caller."""
-        plugins_dir = tmp_path / "hermes_test" / "plugins"
+        plugins_dir = tmp_path / "rhemify_test" / "plugins"
         _make_plugin_dir(
             plugins_dir, "bad_hook",
             register_body='ctx.register_hook("post_tool_call", lambda **kw: 1/0)',
         )
-        monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes_test"))
+        monkeypatch.setenv("RHEMIFY_HOME", str(tmp_path / "rhemify_test"))
 
         mgr = PluginManager()
         mgr.discover_and_load()
@@ -232,7 +232,7 @@ class TestPluginHooks:
 
     def test_hook_return_values_collected(self, tmp_path, monkeypatch):
         """invoke_hook() collects non-None return values from callbacks."""
-        plugins_dir = tmp_path / "hermes_test" / "plugins"
+        plugins_dir = tmp_path / "rhemify_test" / "plugins"
         _make_plugin_dir(
             plugins_dir, "ctx_plugin",
             register_body=(
@@ -240,7 +240,7 @@ class TestPluginHooks:
                 'lambda **kw: {"context": "memory from plugin"})'
             ),
         )
-        monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes_test"))
+        monkeypatch.setenv("RHEMIFY_HOME", str(tmp_path / "rhemify_test"))
 
         mgr = PluginManager()
         mgr.discover_and_load()
@@ -252,12 +252,12 @@ class TestPluginHooks:
 
     def test_hook_none_returns_excluded(self, tmp_path, monkeypatch):
         """invoke_hook() excludes None returns from the result list."""
-        plugins_dir = tmp_path / "hermes_test" / "plugins"
+        plugins_dir = tmp_path / "rhemify_test" / "plugins"
         _make_plugin_dir(
             plugins_dir, "none_hook",
             register_body='ctx.register_hook("post_llm_call", lambda **kw: None)',
         )
-        monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes_test"))
+        monkeypatch.setenv("RHEMIFY_HOME", str(tmp_path / "rhemify_test"))
 
         mgr = PluginManager()
         mgr.discover_and_load()
@@ -267,7 +267,7 @@ class TestPluginHooks:
         assert results == []
 
     def test_request_hooks_are_invokeable(self, tmp_path, monkeypatch):
-        plugins_dir = tmp_path / "hermes_test" / "plugins"
+        plugins_dir = tmp_path / "rhemify_test" / "plugins"
         _make_plugin_dir(
             plugins_dir, "request_hook",
             register_body=(
@@ -276,7 +276,7 @@ class TestPluginHooks:
                 '"mc": kw.get("message_count"), "tc": kw.get("tool_count")})'
             ),
         )
-        monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes_test"))
+        monkeypatch.setenv("RHEMIFY_HOME", str(tmp_path / "rhemify_test"))
 
         mgr = PluginManager()
         mgr.discover_and_load()
@@ -297,14 +297,14 @@ class TestPluginHooks:
 
     def test_invalid_hook_name_warns(self, tmp_path, monkeypatch, caplog):
         """Registering an unknown hook name logs a warning."""
-        plugins_dir = tmp_path / "hermes_test" / "plugins"
+        plugins_dir = tmp_path / "rhemify_test" / "plugins"
         _make_plugin_dir(
             plugins_dir, "warn_plugin",
             register_body='ctx.register_hook("on_banana", lambda **kw: None)',
         )
-        monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes_test"))
+        monkeypatch.setenv("RHEMIFY_HOME", str(tmp_path / "rhemify_test"))
 
-        with caplog.at_level(logging.WARNING, logger="hermes_cli.plugins"):
+        with caplog.at_level(logging.WARNING, logger="rhemify_cli.plugins"):
             mgr = PluginManager()
             mgr.discover_and_load()
 
@@ -319,7 +319,7 @@ class TestPluginContext:
 
     def test_register_tool_adds_to_registry(self, tmp_path, monkeypatch):
         """PluginContext.register_tool() puts the tool in the global registry."""
-        plugins_dir = tmp_path / "hermes_test" / "plugins"
+        plugins_dir = tmp_path / "rhemify_test" / "plugins"
         plugin_dir = plugins_dir / "tool_plugin"
         plugin_dir.mkdir(parents=True)
         (plugin_dir / "plugin.yaml").write_text(yaml.dump({"name": "tool_plugin"}))
@@ -332,7 +332,7 @@ class TestPluginContext:
             '        handler=lambda args, **kw: "echo",\n'
             '    )\n'
         )
-        monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes_test"))
+        monkeypatch.setenv("RHEMIFY_HOME", str(tmp_path / "rhemify_test"))
 
         mgr = PluginManager()
         mgr.discover_and_load()
@@ -351,9 +351,9 @@ class TestPluginToolVisibility:
 
     def test_plugin_tools_in_definitions(self, tmp_path, monkeypatch):
         """Plugin tools are included when their toolset is in enabled_toolsets."""
-        import hermes_cli.plugins as plugins_mod
+        import rhemify_cli.plugins as plugins_mod
 
-        plugins_dir = tmp_path / "hermes_test" / "plugins"
+        plugins_dir = tmp_path / "rhemify_test" / "plugins"
         plugin_dir = plugins_dir / "vis_plugin"
         plugin_dir.mkdir(parents=True)
         (plugin_dir / "plugin.yaml").write_text(yaml.dump({"name": "vis_plugin"}))
@@ -366,7 +366,7 @@ class TestPluginToolVisibility:
             '        handler=lambda args, **kw: "ok",\n'
             '    )\n'
         )
-        monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes_test"))
+        monkeypatch.setenv("RHEMIFY_HOME", str(tmp_path / "rhemify_test"))
 
         mgr = PluginManager()
         mgr.discover_and_load()
@@ -403,10 +403,10 @@ class TestPluginManagerList:
 
     def test_list_returns_sorted(self, tmp_path, monkeypatch):
         """list_plugins() returns results sorted by name."""
-        plugins_dir = tmp_path / "hermes_test" / "plugins"
+        plugins_dir = tmp_path / "rhemify_test" / "plugins"
         _make_plugin_dir(plugins_dir, "zulu")
         _make_plugin_dir(plugins_dir, "alpha")
-        monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes_test"))
+        monkeypatch.setenv("RHEMIFY_HOME", str(tmp_path / "rhemify_test"))
 
         mgr = PluginManager()
         mgr.discover_and_load()
@@ -417,10 +417,10 @@ class TestPluginManagerList:
 
     def test_list_with_plugins(self, tmp_path, monkeypatch):
         """list_plugins() returns info dicts for each discovered plugin."""
-        plugins_dir = tmp_path / "hermes_test" / "plugins"
+        plugins_dir = tmp_path / "rhemify_test" / "plugins"
         _make_plugin_dir(plugins_dir, "alpha")
         _make_plugin_dir(plugins_dir, "beta")
-        monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes_test"))
+        monkeypatch.setenv("RHEMIFY_HOME", str(tmp_path / "rhemify_test"))
 
         mgr = PluginManager()
         mgr.discover_and_load()
@@ -455,12 +455,12 @@ class TestPreLlmCallTargetRouting:
 
     def test_context_dict_returned(self, tmp_path, monkeypatch):
         """Plugin returning a context dict is collected by invoke_hook."""
-        plugins_dir = tmp_path / "hermes_test" / "plugins"
+        plugins_dir = tmp_path / "rhemify_test" / "plugins"
         self._make_pre_llm_plugin(
             plugins_dir, "basic_plugin",
             '{"context": "basic context"}',
         )
-        monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes_test"))
+        monkeypatch.setenv("RHEMIFY_HOME", str(tmp_path / "rhemify_test"))
 
         mgr = PluginManager()
         mgr.discover_and_load()
@@ -475,12 +475,12 @@ class TestPreLlmCallTargetRouting:
 
     def test_plain_string_return(self, tmp_path, monkeypatch):
         """Plain string returns are collected as-is (routing treats them as user_message)."""
-        plugins_dir = tmp_path / "hermes_test" / "plugins"
+        plugins_dir = tmp_path / "rhemify_test" / "plugins"
         self._make_pre_llm_plugin(
             plugins_dir, "str_plugin",
             '"plain string context"',
         )
-        monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes_test"))
+        monkeypatch.setenv("RHEMIFY_HOME", str(tmp_path / "rhemify_test"))
 
         mgr = PluginManager()
         mgr.discover_and_load()
@@ -494,7 +494,7 @@ class TestPreLlmCallTargetRouting:
 
     def test_multiple_plugins_context_collected(self, tmp_path, monkeypatch):
         """Multiple plugins returning context are all collected."""
-        plugins_dir = tmp_path / "hermes_test" / "plugins"
+        plugins_dir = tmp_path / "rhemify_test" / "plugins"
         self._make_pre_llm_plugin(
             plugins_dir, "aaa_memory",
             '{"context": "memory context"}',
@@ -503,7 +503,7 @@ class TestPreLlmCallTargetRouting:
             plugins_dir, "bbb_guardrail",
             '{"context": "guardrail text"}',
         )
-        monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes_test"))
+        monkeypatch.setenv("RHEMIFY_HOME", str(tmp_path / "rhemify_test"))
 
         mgr = PluginManager()
         mgr.discover_and_load()
@@ -523,7 +523,7 @@ class TestPreLlmCallTargetRouting:
         All plugin context — dicts and plain strings — ends up in a single
         user message context string. There is no system_prompt target.
         """
-        plugins_dir = tmp_path / "hermes_test" / "plugins"
+        plugins_dir = tmp_path / "rhemify_test" / "plugins"
         self._make_pre_llm_plugin(
             plugins_dir, "aaa_mem",
             '{"context": "memory A"}',
@@ -536,7 +536,7 @@ class TestPreLlmCallTargetRouting:
             plugins_dir, "ccc_plain",
             '"plain text C"',
         )
-        monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes_test"))
+        monkeypatch.setenv("RHEMIFY_HOME", str(tmp_path / "rhemify_test"))
 
         mgr = PluginManager()
         mgr.discover_and_load()
@@ -562,6 +562,6 @@ class TestPreLlmCallTargetRouting:
 
 
 # NOTE: TestPluginCommands removed – register_command() was never implemented
-# in PluginContext (hermes_cli/plugins.py).  The tests referenced _plugin_commands,
+# in PluginContext (rhemify_cli/plugins.py).  The tests referenced _plugin_commands,
 # commands_registered, get_plugin_command_handler, and GATEWAY_KNOWN_COMMANDS
 # integration — all of which are unimplemented features.

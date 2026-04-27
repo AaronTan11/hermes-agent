@@ -1,1 +1,1 @@
-# Hermes plugins package
+# Rhemify plugins package

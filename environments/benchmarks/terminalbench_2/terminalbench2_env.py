@@ -18,7 +18,7 @@ The evaluate flow:
         a. rollout_and_score_eval()  -- Per-task agent loop + test verification
             - Resolves Docker image (pre-built Hub image or Dockerfile fallback)
             - Registers per-task Modal sandbox via register_task_env_overrides()
-            - Runs the HermesAgentLoop (terminal + file tools)
+            - Runs the RhemifyAgentLoop (terminal + file tools)
             - Uploads test suite and runs test.sh in the same sandbox
             - Returns binary pass/fail result
         b. Aggregates per-task, per-category, and overall pass rates
@@ -57,8 +57,8 @@ from pydantic import Field
 from atroposlib.envs.base import EvalHandlingEnum
 from atroposlib.envs.server_handling.server_manager import APIServerConfig
 
-from environments.agent_loop import AgentResult, HermesAgentLoop
-from environments.hermes_base_env import HermesAgentBaseEnv, HermesAgentEnvConfig
+from environments.agent_loop import AgentResult, RhemifyAgentLoop
+from environments.rhemify_base_env import RhemifyAgentBaseEnv, RhemifyAgentEnvConfig
 from environments.tool_context import ToolContext
 from tools.terminal_tool import (
     register_task_env_overrides,
@@ -73,11 +73,11 @@ logger = logging.getLogger(__name__)
 # Configuration
 # =============================================================================
 
-class TerminalBench2EvalConfig(HermesAgentEnvConfig):
+class TerminalBench2EvalConfig(RhemifyAgentEnvConfig):
     """
     Configuration for the Terminal-Bench 2.0 evaluation environment.
 
-    Extends HermesAgentEnvConfig with TB2-specific settings for dataset loading,
+    Extends RhemifyAgentEnvConfig with TB2-specific settings for dataset loading,
     test execution, task filtering, and eval concurrency.
     """
 
@@ -162,11 +162,11 @@ def _extract_base64_tar(b64_data: str, target_dir: Path):
 # Main Environment
 # =============================================================================
 
-class TerminalBench2EvalEnv(HermesAgentBaseEnv):
+class TerminalBench2EvalEnv(RhemifyAgentBaseEnv):
     """
     Terminal-Bench 2.0 evaluation environment (eval-only, no training).
 
-    Inherits from HermesAgentBaseEnv for:
+    Inherits from RhemifyAgentBaseEnv for:
       - Terminal backend setup (os.environ["TERMINAL_ENV"])
       - Tool resolution via _resolve_tools_for_group()
       - Monkey patches for async-safe tool operation
@@ -179,7 +179,7 @@ class TerminalBench2EvalEnv(HermesAgentBaseEnv):
     Each task in rollout_and_score_eval():
       1. Resolve Docker image (pre-built Hub image or Dockerfile fallback)
       2. Register per-task Modal sandbox override
-      3. Run HermesAgentLoop with terminal + file tools
+      3. Run RhemifyAgentLoop with terminal + file tools
       4. Upload test suite and execute test.sh in the same sandbox
       5. Check /logs/verifier/reward.txt for pass/fail
       6. Clean up sandbox, overrides, and temp files
@@ -233,7 +233,7 @@ class TerminalBench2EvalEnv(HermesAgentBaseEnv):
             steps_per_eval=1,
             total_steps=1,
 
-            tokenizer_name="NousResearch/Hermes-3-Llama-3.1-8B",
+            tokenizer_name="NousResearch/Rhemify-3-Llama-3.1-8B",
             use_wandb=True,
             wandb_name="terminal-bench-2",
             ensure_scores_are_not_same=False,  # Binary rewards may all be 0 or 1
@@ -328,7 +328,7 @@ class TerminalBench2EvalEnv(HermesAgentBaseEnv):
     # =========================================================================
     # Training pipeline stubs -- NOT used in eval-only mode
     # =========================================================================
-    # These satisfy the abstract method requirements from HermesAgentBaseEnv.
+    # These satisfy the abstract method requirements from RhemifyAgentBaseEnv.
     # The evaluate subcommand calls setup() -> evaluate() directly, bypassing
     # the training pipeline entirely.
 
@@ -414,7 +414,7 @@ class TerminalBench2EvalEnv(HermesAgentBaseEnv):
 
         This is the core evaluation method. For each task it:
         1. Resolves the Docker image and registers the Modal sandbox override
-        2. Runs HermesAgentLoop with terminal + file tools
+        2. Runs RhemifyAgentLoop with terminal + file tools
         3. Uploads the test suite into the sandbox
         4. Executes test.sh and checks the result
         5. Cleans up the sandbox and temp files
@@ -476,7 +476,7 @@ class TerminalBench2EvalEnv(HermesAgentBaseEnv):
                     tokenizer=self.tokenizer,
                     preserve_think_blocks=bool(self.config.thinking_mode),
                 ) as managed:
-                    agent = HermesAgentLoop(
+                    agent = RhemifyAgentLoop(
                         server=managed,
                         tool_schemas=tools,
                         valid_tool_names=valid_names,
@@ -488,7 +488,7 @@ class TerminalBench2EvalEnv(HermesAgentBaseEnv):
                     )
                     result = await agent.run(messages)
             else:
-                agent = HermesAgentLoop(
+                agent = RhemifyAgentLoop(
                     server=self.server,
                     tool_schemas=tools,
                     valid_tool_names=valid_names,
@@ -734,7 +734,7 @@ class TerminalBench2EvalEnv(HermesAgentBaseEnv):
         (same pattern as GPQA and other Atropos eval envs). Each task is
         wrapped with a wall-clock timeout so hung tasks auto-fail.
 
-        Suppresses noisy Modal/terminal output (HERMES_QUIET) so the tqdm
+        Suppresses noisy Modal/terminal output (RHEMIFY_QUIET) so the tqdm
         bar stays visible.
         """
         start_time = time.time()

@@ -10,7 +10,7 @@ import requests
 
 from tools.browser_providers.base import CloudBrowserProvider
 from tools.managed_tool_gateway import resolve_managed_tool_gateway
-from tools.tool_backend_helpers import managed_nous_tools_enabled
+from tools.tool_backend_helpers import managed_tools_enabled
 
 logger = logging.getLogger(__name__)
 _pending_create_keys: Dict[str, str] = {}
@@ -97,7 +97,7 @@ class BrowserbaseProvider(CloudBrowserProvider):
             message = (
                 "Browserbase requires direct BROWSERBASE_API_KEY/BROWSERBASE_PROJECT_ID credentials."
             )
-            if managed_nous_tools_enabled():
+            if managed_tools_enabled():
                 message = (
                     "Browserbase requires either direct BROWSERBASE_API_KEY/BROWSERBASE_PROJECT_ID "
                     "credentials or a managed Browserbase gateway configuration."
@@ -201,7 +201,7 @@ class BrowserbaseProvider(CloudBrowserProvider):
         session_data = response.json()
         if managed_mode:
             _clear_pending_create_key(task_id)
-        session_name = f"hermes_{task_id}_{uuid.uuid4().hex[:8]}"
+        session_name = f"rhemify_{task_id}_{uuid.uuid4().hex[:8]}"
         external_call_id = response.headers.get("x-external-call-id") if managed_mode else None
 
         if enable_proxies and not proxies_fallback:

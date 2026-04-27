@@ -251,7 +251,7 @@ class ContextCompressor:
         """Generate a structured summary of conversation turns.
 
         Uses a structured template (Goal, Progress, Decisions, Files, Next Steps)
-        inspired by Pi-mono and OpenCode. When a previous summary exists,
+        inspired by Pi-mono and upstream. When a previous summary exists,
         generates an iterative update instead of summarizing from scratch.
 
         Returns None if all attempts fail — the caller should drop

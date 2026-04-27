@@ -31,8 +31,8 @@ class TestSaveOversizedToolResult:
 
     def test_oversized_result_saved_to_file(self, tmp_path, monkeypatch):
         """Results over the threshold are written to a file."""
-        monkeypatch.setenv("HERMES_HOME", str(tmp_path / ".hermes"))
-        os.makedirs(tmp_path / ".hermes", exist_ok=True)
+        monkeypatch.setenv("RHEMIFY_HOME", str(tmp_path / ".rhemify"))
+        os.makedirs(tmp_path / ".rhemify", exist_ok=True)
 
         big = "A" * (_LARGE_RESULT_CHARS + 500)
         result = _save_oversized_tool_result("terminal", big)
@@ -55,23 +55,23 @@ class TestSaveOversizedToolResult:
         assert len(saved) == _LARGE_RESULT_CHARS + 500
 
     def test_file_placed_in_cache_tool_responses(self, tmp_path, monkeypatch):
-        """Saved file lives under HERMES_HOME/cache/tool_responses/."""
-        hermes_home = str(tmp_path / ".hermes")
-        monkeypatch.setenv("HERMES_HOME", hermes_home)
-        os.makedirs(hermes_home, exist_ok=True)
+        """Saved file lives under RHEMIFY_HOME/cache/tool_responses/."""
+        rhemify_home = str(tmp_path / ".rhemify")
+        monkeypatch.setenv("RHEMIFY_HOME", rhemify_home)
+        os.makedirs(rhemify_home, exist_ok=True)
 
         big = "B" * (_LARGE_RESULT_CHARS + 1)
         result = _save_oversized_tool_result("web_search", big)
 
         match = re.search(r"Full output saved to: (.+?)\n", result)
         filepath = match.group(1)
-        expected_dir = os.path.join(hermes_home, "cache", "tool_responses")
+        expected_dir = os.path.join(rhemify_home, "cache", "tool_responses")
         assert filepath.startswith(expected_dir)
 
     def test_filename_contains_tool_name(self, tmp_path, monkeypatch):
         """The saved filename includes a sanitized version of the tool name."""
-        monkeypatch.setenv("HERMES_HOME", str(tmp_path / ".hermes"))
-        os.makedirs(tmp_path / ".hermes", exist_ok=True)
+        monkeypatch.setenv("RHEMIFY_HOME", str(tmp_path / ".rhemify"))
+        os.makedirs(tmp_path / ".rhemify", exist_ok=True)
 
         big = "C" * (_LARGE_RESULT_CHARS + 1)
         result = _save_oversized_tool_result("browser_navigate", big)
@@ -83,8 +83,8 @@ class TestSaveOversizedToolResult:
 
     def test_tool_name_sanitized(self, tmp_path, monkeypatch):
         """Special characters in tool names are replaced in the filename."""
-        monkeypatch.setenv("HERMES_HOME", str(tmp_path / ".hermes"))
-        os.makedirs(tmp_path / ".hermes", exist_ok=True)
+        monkeypatch.setenv("RHEMIFY_HOME", str(tmp_path / ".rhemify"))
+        os.makedirs(tmp_path / ".rhemify", exist_ok=True)
 
         big = "D" * (_LARGE_RESULT_CHARS + 1)
         result = _save_oversized_tool_result("mcp:some/weird tool", big)
@@ -97,11 +97,11 @@ class TestSaveOversizedToolResult:
 
     def test_fallback_on_write_failure(self, tmp_path, monkeypatch):
         """When file write fails, falls back to destructive truncation."""
-        # Point HERMES_HOME to a path that will fail (file, not directory)
+        # Point RHEMIFY_HOME to a path that will fail (file, not directory)
         bad_path = str(tmp_path / "not_a_dir.txt")
         with open(bad_path, "w") as f:
             f.write("I'm a file, not a directory")
-        monkeypatch.setenv("HERMES_HOME", bad_path)
+        monkeypatch.setenv("RHEMIFY_HOME", bad_path)
 
         big = "E" * (_LARGE_RESULT_CHARS + 50_000)
         result = _save_oversized_tool_result("terminal", big)
@@ -116,8 +116,8 @@ class TestSaveOversizedToolResult:
 
     def test_preview_length_capped(self, tmp_path, monkeypatch):
         """The inline preview is capped at _LARGE_RESULT_PREVIEW_CHARS."""
-        monkeypatch.setenv("HERMES_HOME", str(tmp_path / ".hermes"))
-        os.makedirs(tmp_path / ".hermes", exist_ok=True)
+        monkeypatch.setenv("RHEMIFY_HOME", str(tmp_path / ".rhemify"))
+        os.makedirs(tmp_path / ".rhemify", exist_ok=True)
 
         # Use distinct chars so we can measure the preview
         big = "Z" * (_LARGE_RESULT_CHARS + 5000)
@@ -130,8 +130,8 @@ class TestSaveOversizedToolResult:
 
     def test_guidance_message_mentions_tools(self, tmp_path, monkeypatch):
         """The replacement message tells the model how to access the file."""
-        monkeypatch.setenv("HERMES_HOME", str(tmp_path / ".hermes"))
-        os.makedirs(tmp_path / ".hermes", exist_ok=True)
+        monkeypatch.setenv("RHEMIFY_HOME", str(tmp_path / ".rhemify"))
+        os.makedirs(tmp_path / ".rhemify", exist_ok=True)
 
         big = "F" * (_LARGE_RESULT_CHARS + 1)
         result = _save_oversized_tool_result("terminal", big)
@@ -145,8 +145,8 @@ class TestSaveOversizedToolResult:
 
     def test_unicode_content_preserved(self, tmp_path, monkeypatch):
         """Unicode content is fully preserved in the saved file."""
-        monkeypatch.setenv("HERMES_HOME", str(tmp_path / ".hermes"))
-        os.makedirs(tmp_path / ".hermes", exist_ok=True)
+        monkeypatch.setenv("RHEMIFY_HOME", str(tmp_path / ".rhemify"))
+        os.makedirs(tmp_path / ".rhemify", exist_ok=True)
 
         # Mix of ASCII and multi-byte unicode to exceed threshold
         unit = "Hello 世界! 🎉 " * 100  # ~1400 chars per repeat

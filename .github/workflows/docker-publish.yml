@@ -15,7 +15,7 @@ concurrency:
 jobs:
   build-and-push:
     # Only run on the upstream repository, not on forks
-    if: github.repository == 'NousResearch/hermes-agent'
+    if: github.repository == 'NousResearch/rhemify'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -33,16 +33,16 @@ jobs:
           context: .
           file: Dockerfile
           load: true
-          tags: nousresearch/hermes-agent:test
+          tags: nousresearch/rhemify:test
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
       - name: Test image starts
         run: |
           docker run --rm \
-            -v /tmp/hermes-test:/opt/data \
-            --entrypoint /opt/hermes/docker/entrypoint.sh \
-            nousresearch/hermes-agent:test --help
+            -v /tmp/rhemify-test:/opt/data \
+            --entrypoint /opt/rhemify/docker/entrypoint.sh \
+            nousresearch/rhemify:test --help
 
       - name: Log in to Docker Hub
         if: github.event_name == 'push' && github.ref == 'refs/heads/main' || github.event_name == 'release'
@@ -59,8 +59,8 @@ jobs:
           file: Dockerfile
           push: true
           tags: |
-            nousresearch/hermes-agent:latest
-            nousresearch/hermes-agent:${{ github.sha }}
+            nousresearch/rhemify:latest
+            nousresearch/rhemify:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -72,8 +72,8 @@ jobs:
           file: Dockerfile
           push: true
           tags: |
-            nousresearch/hermes-agent:latest
-            nousresearch/hermes-agent:${{ github.event.release.tag_name }}
-            nousresearch/hermes-agent:${{ github.sha }}
+            nousresearch/rhemify:latest
+            nousresearch/rhemify:${{ github.event.release.tag_name }}
+            nousresearch/rhemify:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max

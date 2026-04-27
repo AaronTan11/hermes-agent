@@ -40,7 +40,7 @@ def _make_adapter(tmp_path=None):
         token="syt_test_token",
         extra={
             "homeserver": "https://matrix.example.org",
-            "user_id": "@hermes:example.org",
+            "user_id": "@rhemify:example.org",
         },
     )
     adapter = MatrixAdapter(config)
@@ -98,17 +98,17 @@ class TestIsBotMentioned:
         self.adapter = _make_adapter()
 
     def test_full_user_id_in_body(self):
-        assert self.adapter._is_bot_mentioned("hey @hermes:example.org help")
+        assert self.adapter._is_bot_mentioned("hey @rhemify:example.org help")
 
     def test_localpart_in_body(self):
-        assert self.adapter._is_bot_mentioned("hermes can you help?")
+        assert self.adapter._is_bot_mentioned("rhemify can you help?")
 
     def test_localpart_case_insensitive(self):
-        assert self.adapter._is_bot_mentioned("HERMES can you help?")
+        assert self.adapter._is_bot_mentioned("RHEMIFY can you help?")
 
     def test_matrix_pill_in_formatted_body(self):
-        html = '<a href="https://matrix.to/#/@hermes:example.org">Hermes</a> help'
-        assert self.adapter._is_bot_mentioned("Hermes help", html)
+        html = '<a href="https://matrix.to/#/@rhemify:example.org">Rhemify</a> help'
+        assert self.adapter._is_bot_mentioned("Rhemify help", html)
 
     def test_no_mention(self):
         assert not self.adapter._is_bot_mentioned("hello everyone")
@@ -117,8 +117,8 @@ class TestIsBotMentioned:
         assert not self.adapter._is_bot_mentioned("")
 
     def test_partial_localpart_no_match(self):
-        # "hermesbot" should not match word-boundary check for "hermes"
-        assert not self.adapter._is_bot_mentioned("hermesbot is here")
+        # "rhemifybot" should not match word-boundary check for "rhemify"
+        assert not self.adapter._is_bot_mentioned("rhemifybot is here")
 
 
 class TestStripMention:
@@ -126,15 +126,15 @@ class TestStripMention:
         self.adapter = _make_adapter()
 
     def test_strip_full_user_id(self):
-        result = self.adapter._strip_mention("@hermes:example.org help me")
+        result = self.adapter._strip_mention("@rhemify:example.org help me")
         assert result == "help me"
 
     def test_strip_localpart(self):
-        result = self.adapter._strip_mention("hermes help me")
+        result = self.adapter._strip_mention("rhemify help me")
         assert result == "help me"
 
     def test_strip_returns_empty_for_mention_only(self):
-        result = self.adapter._strip_mention("@hermes:example.org")
+        result = self.adapter._strip_mention("@rhemify:example.org")
         assert result == ""
 
 
@@ -167,7 +167,7 @@ async def test_require_mention_default_processes_mentioned(monkeypatch):
 
     adapter = _make_adapter()
     room = _make_room()
-    event = _make_event("@hermes:example.org help me")
+    event = _make_event("@rhemify:example.org help me")
 
     await adapter._on_room_message(room, event)
     adapter.handle_message.assert_awaited_once()
@@ -184,8 +184,8 @@ async def test_require_mention_html_pill(monkeypatch):
 
     adapter = _make_adapter()
     room = _make_room()
-    formatted = '<a href="https://matrix.to/#/@hermes:example.org">Hermes</a> help'
-    event = _make_event("Hermes help", formatted_body=formatted)
+    formatted = '<a href="https://matrix.to/#/@rhemify:example.org">Rhemify</a> help'
+    event = _make_event("Rhemify help", formatted_body=formatted)
 
     await adapter._on_room_message(room, event)
     adapter.handle_message.assert_awaited_once()
@@ -216,7 +216,7 @@ async def test_dm_strips_mention(monkeypatch):
 
     adapter = _make_adapter()
     room = _make_room(member_count=2)
-    event = _make_event("@hermes:example.org help me")
+    event = _make_event("@rhemify:example.org help me")
 
     await adapter._on_room_message(room, event)
     adapter.handle_message.assert_awaited_once()
@@ -233,7 +233,7 @@ async def test_bare_mention_passes_empty_string(monkeypatch):
 
     adapter = _make_adapter()
     room = _make_room()
-    event = _make_event("@hermes:example.org")
+    event = _make_event("@rhemify:example.org")
 
     await adapter._on_room_message(room, event)
     adapter.handle_message.assert_awaited_once()

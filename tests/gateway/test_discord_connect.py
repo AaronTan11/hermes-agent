@@ -58,7 +58,7 @@ class FakeTree:
 class FakeBot:
     def __init__(self, *, intents):
         self.intents = intents
-        self.user = SimpleNamespace(id=999, name="Hermes")
+        self.user = SimpleNamespace(id=999, name="Rhemify")
         self._events = {}
         self.tree = FakeTree()
 

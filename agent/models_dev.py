@@ -8,9 +8,9 @@ of 4000+ models across 109+ providers.  Provides:
   (reasoning, tools, vision, PDF, audio), modalities, knowledge cutoff,
   open-weights flag, family grouping, deprecation status
 
-Data resolution order (like TypeScript OpenCode):
+Data resolution order (like TypeScript upstream):
   1. Bundled snapshot (ships with the package — offline-first)
-  2. Disk cache (~/.hermes/models_dev_cache.json)
+  2. Disk cache (~/.rhemify/models_dev_cache.json)
   3. Network fetch (https://models.dev/api.json)
   4. Background refresh every 60 minutes
 
@@ -140,10 +140,10 @@ class ProviderInfo:
 
 
 # ---------------------------------------------------------------------------
-# Provider ID mapping: Hermes ↔ models.dev
+# Provider ID mapping: Rhemify ↔ models.dev
 # ---------------------------------------------------------------------------
 
-# Hermes provider names → models.dev provider IDs
+# Rhemify provider names → models.dev provider IDs
 PROVIDER_TO_MODELS_DEV: Dict[str, str] = {
     "openrouter": "openrouter",
     "anthropic": "anthropic",
@@ -170,12 +170,12 @@ PROVIDER_TO_MODELS_DEV: Dict[str, str] = {
     "cohere": "cohere",
 }
 
-# Reverse mapping: models.dev → Hermes (built lazily)
+# Reverse mapping: models.dev → Rhemify (built lazily)
 _MODELS_DEV_TO_PROVIDER: Optional[Dict[str, str]] = None
 
 
 def _get_reverse_mapping() -> Dict[str, str]:
-    """Return models.dev ID → Hermes provider ID mapping."""
+    """Return models.dev ID → Rhemify provider ID mapping."""
     global _MODELS_DEV_TO_PROVIDER
     if _MODELS_DEV_TO_PROVIDER is None:
         _MODELS_DEV_TO_PROVIDER = {v: k for k, v in PROVIDER_TO_MODELS_DEV.items()}
@@ -184,9 +184,9 @@ def _get_reverse_mapping() -> Dict[str, str]:
 
 def _get_cache_path() -> Path:
     """Return path to disk cache file."""
-    env_val = os.environ.get("HERMES_HOME", "")
-    hermes_home = Path(env_val) if env_val else Path.home() / ".hermes"
-    return hermes_home / "models_dev_cache.json"
+    env_val = os.environ.get("RHEMIFY_HOME", "")
+    rhemify_home = Path(env_val) if env_val else Path.home() / ".rhemify"
+    return rhemify_home / "models_dev_cache.json"
 
 
 def _load_disk_cache() -> Dict[str, Any]:
@@ -325,7 +325,7 @@ class ModelCapabilities:
 
 
 def _get_provider_models(provider: str) -> Optional[Dict[str, Any]]:
-    """Resolve a Hermes provider ID to its models dict from models.dev.
+    """Resolve a Rhemify provider ID to its models dict from models.dev.
 
     Returns the models dict or None if the provider is unknown or has no data.
     """
@@ -429,7 +429,7 @@ def search_models_dev(
 
     Args:
         query: Search string to match against model IDs.
-        provider: Optional Hermes provider ID to restrict search scope.
+        provider: Optional Rhemify provider ID to restrict search scope.
                   If None, searches across all providers in PROVIDER_TO_MODELS_DEV.
         limit: Maximum number of results to return.
 
@@ -457,13 +457,13 @@ def search_models_dev(
                     candidates.append((provider, mid, mdata))
     else:
         # Search across all mapped providers
-        for hermes_prov, mdev_prov in PROVIDER_TO_MODELS_DEV.items():
+        for rhemify_prov, mdev_prov in PROVIDER_TO_MODELS_DEV.items():
             provider_data = data.get(mdev_prov, {})
             if isinstance(provider_data, dict):
                 models = provider_data.get("models", {})
                 if isinstance(models, dict):
                     for mid, mdata in models.items():
-                        candidates.append((hermes_prov, mid, mdata))
+                        candidates.append((rhemify_prov, mid, mdata))
 
     if not candidates:
         return []
@@ -586,10 +586,10 @@ def _parse_provider_info(provider_id: str, raw: Dict[str, Any]) -> ProviderInfo:
 def get_provider_info(provider_id: str) -> Optional[ProviderInfo]:
     """Get full provider metadata from models.dev.
 
-    Accepts either a Hermes provider ID (e.g. "kilocode") or a models.dev
+    Accepts either a Rhemify provider ID (e.g. "kilocode") or a models.dev
     ID (e.g. "kilo").  Returns None if the provider is not in the catalog.
     """
-    # Resolve Hermes ID → models.dev ID
+    # Resolve Rhemify ID → models.dev ID
     mdev_id = PROVIDER_TO_MODELS_DEV.get(provider_id, provider_id)
 
     data = fetch_models_dev()
@@ -604,7 +604,7 @@ def list_all_providers() -> Dict[str, ProviderInfo]:
     """Return all providers from models.dev as {provider_id: ProviderInfo}.
 
     Returns the full catalog — 109+ providers.  For providers that have
-    a Hermes alias, both the models.dev ID and the Hermes ID are included.
+    a Rhemify alias, both the models.dev ID and the Rhemify ID are included.
     """
     data = fetch_models_dev()
     result: Dict[str, ProviderInfo] = {}
@@ -646,7 +646,7 @@ def get_model_info(
 ) -> Optional[ModelInfo]:
     """Get full model metadata from models.dev.
 
-    Accepts Hermes or models.dev provider ID.  Tries exact match then
+    Accepts Rhemify or models.dev provider ID.  Tries exact match then
     case-insensitive fallback.  Returns None if not found.
     """
     mdev_id = PROVIDER_TO_MODELS_DEV.get(provider_id, provider_id)
@@ -678,13 +678,13 @@ def get_model_info_any_provider(model_id: str) -> Optional[ModelInfo]:
     """Search all providers for a model by ID.
 
     Useful when you have a full slug like "anthropic/claude-sonnet-4.6" or
-    a bare name and want to find it anywhere.  Checks Hermes-mapped providers
+    a bare name and want to find it anywhere.  Checks Rhemify-mapped providers
     first, then falls back to all models.dev providers.
     """
     data = fetch_models_dev()
 
-    # Try Hermes-mapped providers first (more likely what the user wants)
-    for hermes_id, mdev_id in PROVIDER_TO_MODELS_DEV.items():
+    # Try Rhemify-mapped providers first (more likely what the user wants)
+    for rhemify_id, mdev_id in PROVIDER_TO_MODELS_DEV.items():
         pdata = data.get(mdev_id)
         if not isinstance(pdata, dict):
             continue

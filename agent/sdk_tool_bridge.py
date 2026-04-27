@@ -1,4 +1,4 @@
-"""Bridge Hermes ToolRegistry to Claude Agent SDK in-process MCP servers.
+"""Bridge Rhemify ToolRegistry to Claude Agent SDK in-process MCP servers.
 
 Iterates the registry, wraps each handler for the SDK's ``@tool`` interface,
 and bundles them by toolset into ``create_sdk_mcp_server()`` instances.
@@ -9,10 +9,10 @@ mutable context dict.
 
 Usage::
 
-    from agent.sdk_tool_bridge import build_hermes_mcp_servers
+    from agent.sdk_tool_bridge import build_rhemify_mcp_servers
 
     context = {}  # mutable — caller sets task_id, stores, etc. before each query()
-    servers = build_hermes_mcp_servers(context=context)
+    servers = build_rhemify_mcp_servers(context=context)
     # Pass servers to ClaudeAgentOptions(mcp_servers=servers)
 """
 
@@ -50,7 +50,7 @@ _SDK_NATIVE_REPLACEMENTS: frozenset[str] = frozenset({
 
 
 def _make_handler_wrapper(entry, context: dict):
-    """Create an async wrapper that calls a Hermes handler and returns SDK format.
+    """Create an async wrapper that calls a Rhemify handler and returns SDK format.
 
     The wrapper captures *context* by reference so the caller can update it
     (task_id, stores, etc.) before each query() and the tools see fresh values.
@@ -58,7 +58,7 @@ def _make_handler_wrapper(entry, context: dict):
     from model_tools import coerce_tool_args
 
     async def _wrapper(args: Dict[str, Any]) -> Dict[str, Any]:
-        # Type-coerce LLM string args (e.g., "42" → 42) using Hermes schemas
+        # Type-coerce LLM string args (e.g., "42" → 42) using Rhemify schemas
         args = coerce_tool_args(entry.name, args)
 
         try:
@@ -69,7 +69,7 @@ def _make_handler_wrapper(entry, context: dict):
                 # Sync handler — run in thread to avoid blocking event loop
                 result = await asyncio.to_thread(entry.handler, args, **context)
         except Exception as exc:
-            logger.exception("Hermes tool %s error: %s", entry.name, exc)
+            logger.exception("Rhemify tool %s error: %s", entry.name, exc)
             return {
                 "content": [{"type": "text", "text": json.dumps(
                     {"error": f"{type(exc).__name__}: {exc}"}
@@ -77,7 +77,7 @@ def _make_handler_wrapper(entry, context: dict):
                 "is_error": True,
             }
 
-        # Hermes handlers return JSON strings
+        # Rhemify handlers return JSON strings
         if not isinstance(result, str):
             result = json.dumps(result, ensure_ascii=False)
 
@@ -299,11 +299,11 @@ def _build_memory_plugin_tools(context: dict) -> list:
     return tools
 
 
-def build_hermes_mcp_servers(
+def build_rhemify_mcp_servers(
     context: dict,
     skip_tools: Optional[Set[str]] = None,
 ) -> dict:
-    """Build Agent SDK MCP server dict from the Hermes tool registry.
+    """Build Agent SDK MCP server dict from the Rhemify tool registry.
 
     Args:
         context: Mutable dict shared with all tool handlers. The caller
@@ -334,14 +334,14 @@ def build_hermes_mcp_servers(
     # 3. Memory plugin tools
     mm_tools = _build_memory_plugin_tools(context)
 
-    # Bundle agent-loop + memory-plugin tools into a single "hermes_core" server
+    # Bundle agent-loop + memory-plugin tools into a single "rhemify_core" server
     core_tools = agent_loop_tools + mm_tools
 
     servers = {}
 
     # Create one MCP server per toolset
     for toolset_name, tool_list in grouped.items():
-        server_name = f"hermes_{toolset_name}"
+        server_name = f"rhemify_{toolset_name}"
         servers[server_name] = create_sdk_mcp_server(
             name=server_name,
             version="1.0.0",
@@ -350,8 +350,8 @@ def build_hermes_mcp_servers(
 
     # Core server for agent-loop + plugin tools
     if core_tools:
-        servers["hermes_core"] = create_sdk_mcp_server(
-            name="hermes_core",
+        servers["rhemify_core"] = create_sdk_mcp_server(
+            name="rhemify_core",
             version="1.0.0",
             tools=core_tools,
         )

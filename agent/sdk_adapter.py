@@ -37,7 +37,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 async def _approval_hook(input_data: dict, tool_use_id, context) -> dict:
-    """PreToolUse hook: detect dangerous commands via Hermes approval system."""
+    """PreToolUse hook: detect dangerous commands via Rhemify approval system."""
     if input_data.get("tool_name") != "Bash":
         return {}
 
@@ -167,13 +167,13 @@ class SDKAgentRunner:
     async def connect(self, initial_prompt: Optional[str] = None):
         """Create and connect the ClaudeSDKClient subprocess."""
         from claude_agent_sdk import ClaudeSDKClient, ClaudeAgentOptions, HookMatcher
-        from agent.sdk_tool_bridge import build_hermes_mcp_servers, SDK_BUILTIN_OVERLAPS
+        from agent.sdk_tool_bridge import build_rhemify_mcp_servers, SDK_BUILTIN_OVERLAPS
 
         skip = set(SDK_BUILTIN_OVERLAPS) if self._skip_duplicate_tools else set()
-        mcp_servers = build_hermes_mcp_servers(context=self._context, skip_tools=skip)
+        mcp_servers = build_rhemify_mcp_servers(context=self._context, skip_tools=skip)
 
         # Build allowed_tools list — all MCP tools + SDK built-ins + Agent + AskUserQuestion
-        allowed_tools = ["mcp__hermes_*__*"]  # wildcard for all hermes MCP servers
+        allowed_tools = ["mcp__rhemify_*__*"]  # wildcard for all rhemify MCP servers
         if self._skip_duplicate_tools:
             allowed_tools.extend([
                 "Read", "Write", "Edit", "Bash", "Glob", "Grep",
@@ -325,13 +325,13 @@ async def run_sdk_oneshot(
     Ideal for cron jobs and one-off tasks.
     """
     from claude_agent_sdk import query, ClaudeAgentOptions, ResultMessage, AssistantMessage, SystemMessage
-    from agent.sdk_tool_bridge import build_hermes_mcp_servers, SDK_BUILTIN_OVERLAPS
+    from agent.sdk_tool_bridge import build_rhemify_mcp_servers, SDK_BUILTIN_OVERLAPS
 
     ctx = context if context is not None else {}
     skip = set(SDK_BUILTIN_OVERLAPS) if skip_duplicate_tools else set()
-    mcp_servers = build_hermes_mcp_servers(context=ctx, skip_tools=skip)
+    mcp_servers = build_rhemify_mcp_servers(context=ctx, skip_tools=skip)
 
-    allowed_tools = ["mcp__hermes_*__*"]
+    allowed_tools = ["mcp__rhemify_*__*"]
     if skip_duplicate_tools:
         allowed_tools.extend([
             "Read", "Write", "Edit", "Bash", "Glob", "Grep",

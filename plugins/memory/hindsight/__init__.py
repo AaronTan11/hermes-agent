@@ -7,12 +7,12 @@ Original PR #1811 by benfrank241, adapted to MemoryProvider ABC.
 
 Config via environment variables:
   HINDSIGHT_API_KEY   — API key for Hindsight Cloud
-  HINDSIGHT_BANK_ID   — memory bank identifier (default: hermes)
+  HINDSIGHT_BANK_ID   — memory bank identifier (default: rhemify)
   HINDSIGHT_BUDGET    — recall budget: low/mid/high (default: mid)
   HINDSIGHT_API_URL   — API endpoint
   HINDSIGHT_MODE      — cloud or local (default: cloud)
 
-Or via $HERMES_HOME/hindsight/config.json (profile-scoped), falling back to
+Or via $RHEMIFY_HOME/hindsight/config.json (profile-scoped), falling back to
 ~/.hindsight/config.json (legacy, shared) for backward compatibility.
 """
 
@@ -136,15 +136,15 @@ def _load_config() -> dict:
     """Load config from profile-scoped path, legacy path, or env vars.
 
     Resolution order:
-      1. $HERMES_HOME/hindsight/config.json  (profile-scoped)
+      1. $RHEMIFY_HOME/hindsight/config.json  (profile-scoped)
       2. ~/.hindsight/config.json             (legacy, shared)
       3. Environment variables
     """
     from pathlib import Path
-    from hermes_constants import get_hermes_home
+    from rhemify_constants import get_rhemify_home
 
     # Profile-scoped path (preferred)
-    profile_path = get_hermes_home() / "hindsight" / "config.json"
+    profile_path = get_rhemify_home() / "hindsight" / "config.json"
     if profile_path.exists():
         try:
             return json.loads(profile_path.read_text(encoding="utf-8"))
@@ -163,8 +163,8 @@ def _load_config() -> dict:
         "mode": os.environ.get("HINDSIGHT_MODE", "cloud"),
         "apiKey": os.environ.get("HINDSIGHT_API_KEY", ""),
         "banks": {
-            "hermes": {
-                "bankId": os.environ.get("HINDSIGHT_BANK_ID", "hermes"),
+            "rhemify": {
+                "bankId": os.environ.get("HINDSIGHT_BANK_ID", "rhemify"),
                 "budget": os.environ.get("HINDSIGHT_BUDGET", "mid"),
                 "enabled": True,
             }
@@ -183,7 +183,7 @@ class HindsightMemoryProvider(MemoryProvider):
         self._config = None
         self._api_key = None
         self._api_url = _DEFAULT_API_URL
-        self._bank_id = "hermes"
+        self._bank_id = "rhemify"
         self._budget = "mid"
         self._mode = "cloud"
         self._memory_mode = "hybrid"  # "context", "tools", or "hybrid"
@@ -210,11 +210,11 @@ class HindsightMemoryProvider(MemoryProvider):
         except Exception:
             return False
 
-    def save_config(self, values, hermes_home):
-        """Write config to $HERMES_HOME/hindsight/config.json."""
+    def save_config(self, values, rhemify_home):
+        """Write config to $RHEMIFY_HOME/hindsight/config.json."""
         import json
         from pathlib import Path
-        config_dir = Path(hermes_home) / "hindsight"
+        config_dir = Path(rhemify_home) / "hindsight"
         config_dir.mkdir(parents=True, exist_ok=True)
         config_path = config_dir / "config.json"
         existing = {}
@@ -234,7 +234,7 @@ class HindsightMemoryProvider(MemoryProvider):
             {"key": "llm_provider", "description": "LLM provider for local mode", "default": "openai", "choices": ["openai", "anthropic", "gemini", "groq", "minimax", "ollama"], "when": {"mode": "local"}},
             {"key": "llm_api_key", "description": "LLM API key for local Hindsight", "secret": True, "env_var": "HINDSIGHT_LLM_API_KEY", "when": {"mode": "local"}},
             {"key": "llm_model", "description": "LLM model for local mode", "default": "gpt-4o-mini", "default_from": {"field": "llm_provider", "map": _PROVIDER_DEFAULT_MODELS}, "when": {"mode": "local"}},
-            {"key": "bank_id", "description": "Memory bank name", "default": "hermes"},
+            {"key": "bank_id", "description": "Memory bank name", "default": "rhemify"},
             {"key": "budget", "description": "Recall thoroughness", "default": "mid", "choices": ["low", "mid", "high"]},
             {"key": "memory_mode", "description": "Memory integration mode", "default": "hybrid", "choices": ["hybrid", "context", "tools"]},
             {"key": "prefetch_method", "description": "Auto-recall method", "default": "recall", "choices": ["recall", "reflect"]},
@@ -250,7 +250,7 @@ class HindsightMemoryProvider(MemoryProvider):
                 # shutdown() instead.
                 HindsightEmbedded.__del__ = lambda self: None
                 self._client = HindsightEmbedded(
-                    profile=self._config.get("profile", "hermes"),
+                    profile=self._config.get("profile", "rhemify"),
                     llm_provider=self._config.get("llm_provider", ""),
                     llm_api_key=self._config.get("llmApiKey") or os.environ.get("HINDSIGHT_LLM_API_KEY", ""),
                     llm_model=self._config.get("llm_model", ""),
@@ -270,8 +270,8 @@ class HindsightMemoryProvider(MemoryProvider):
         default_url = _DEFAULT_LOCAL_URL if self._mode == "local" else _DEFAULT_API_URL
         self._api_url = self._config.get("api_url") or os.environ.get("HINDSIGHT_API_URL", default_url)
 
-        banks = self._config.get("banks", {}).get("hermes", {})
-        self._bank_id = self._config.get("bank_id") or banks.get("bankId", "hermes")
+        banks = self._config.get("banks", {}).get("rhemify", {})
+        self._bank_id = self._config.get("bank_id") or banks.get("bankId", "rhemify")
         budget = self._config.get("budget") or banks.get("budget", "mid")
         self._budget = budget if budget in _VALID_BUDGETS else "mid"
 
@@ -291,7 +291,7 @@ class HindsightMemoryProvider(MemoryProvider):
             def _start_daemon():
                 import traceback
                 from pathlib import Path
-                log_dir = Path(os.environ.get("HERMES_HOME", os.path.expanduser("~/.hermes"))) / "logs"
+                log_dir = Path(os.environ.get("RHEMIFY_HOME", os.path.expanduser("~/.rhemify"))) / "logs"
                 log_dir.mkdir(parents=True, exist_ok=True)
                 log_path = log_dir / "hindsight-embed.log"
                 try:
@@ -303,7 +303,7 @@ class HindsightMemoryProvider(MemoryProvider):
                     dem.console = Console(file=open(log_path, "a"), force_terminal=False)
 
                     client = self._get_client()
-                    profile = self._config.get("profile", "hermes")
+                    profile = self._config.get("profile", "rhemify")
 
                     # Update the profile .env to match our current config so
                     # the daemon always starts with the right settings.

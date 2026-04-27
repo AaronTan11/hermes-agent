@@ -10,15 +10,15 @@ Long-term memory with knowledge graph, entity resolution, and multi-strategy ret
 ## Setup
 
 ```bash
-hermes memory setup    # select "hindsight"
+rhemify memory setup    # select "hindsight"
 ```
 
 The setup wizard will install dependencies automatically via `uv` and walk you through configuration.
 
 Or manually (cloud mode with defaults):
 ```bash
-hermes config set memory.provider hindsight
-echo "HINDSIGHT_API_KEY=your-key" >> ~/.hermes/.env
+rhemify config set memory.provider hindsight
+echo "HINDSIGHT_API_KEY=your-key" >> ~/.rhemify/.env
 ```
 
 ### Cloud Mode
@@ -29,12 +29,12 @@ Connects to the Hindsight Cloud API. Requires an API key from [ui.hindsight.vect
 
 Runs an embedded Hindsight server with built-in PostgreSQL. Requires an LLM API key (e.g. Groq, OpenAI, Anthropic) for memory extraction and synthesis. The daemon starts automatically in the background on first use and stops after 5 minutes of inactivity.
 
-Daemon startup logs: `~/.hermes/logs/hindsight-embed.log`
+Daemon startup logs: `~/.rhemify/logs/hindsight-embed.log`
 Daemon runtime logs: `~/.hindsight/profiles/<profile>.log`
 
 ## Config
 
-Config file: `~/.hermes/hindsight/config.json`
+Config file: `~/.rhemify/hindsight/config.json`
 
 ### Connection
 
@@ -48,7 +48,7 @@ Config file: `~/.hermes/hindsight/config.json`
 
 | Key | Default | Description |
 |-----|---------|-------------|
-| `bank_id` | `hermes` | Memory bank name |
+| `bank_id` | `rhemify` | Memory bank name |
 | `budget` | `mid` | Recall thoroughness: `low` / `mid` / `high` |
 
 ### Integration
@@ -74,7 +74,7 @@ Config file: `~/.hermes/hindsight/config.json`
 | `llm_provider` | `openai` | LLM provider: `openai`, `anthropic`, `gemini`, `groq`, `minimax`, `ollama` |
 | `llm_model` | per-provider | Model name (e.g. `gpt-4o-mini`, `openai/gpt-oss-120b`) |
 
-The LLM API key is stored in `~/.hermes/.env` as `HINDSIGHT_LLM_API_KEY`.
+The LLM API key is stored in `~/.rhemify/.env` as `HINDSIGHT_LLM_API_KEY`.
 
 ## Tools
 

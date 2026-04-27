@@ -4,9 +4,9 @@ Gateway runtime status helpers.
 Provides PID-file based detection of whether the gateway daemon is running,
 used by send_message's check_fn to gate availability in the CLI.
 
-The PID file lives at ``{HERMES_HOME}/gateway.pid``.  HERMES_HOME defaults to
-``~/.hermes`` but can be overridden via the environment variable.  This means
-separate HERMES_HOME directories naturally get separate PID files — a property
+The PID file lives at ``{RHEMIFY_HOME}/gateway.pid``.  RHEMIFY_HOME defaults to
+``~/.rhemify`` but can be overridden via the environment variable.  This means
+separate RHEMIFY_HOME directories naturally get separate PID files — a property
 that will be useful when we add named profiles (multiple agents running
 concurrently under distinct configurations).
 """
@@ -17,17 +17,17 @@ import os
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
-from hermes_constants import get_hermes_home
+from rhemify_constants import get_rhemify_home
 from typing import Any, Optional
 
-_GATEWAY_KIND = "hermes-gateway"
+_GATEWAY_KIND = "rhemify-gateway"
 _RUNTIME_STATUS_FILE = "gateway_state.json"
 _LOCKS_DIRNAME = "gateway-locks"
 
 
 def _get_pid_path() -> Path:
-    """Return the path to the gateway PID file, respecting HERMES_HOME."""
-    home = get_hermes_home()
+    """Return the path to the gateway PID file, respecting RHEMIFY_HOME."""
+    home = get_rhemify_home()
     return home / "gateway.pid"
 
 
@@ -38,11 +38,11 @@ def _get_runtime_status_path() -> Path:
 
 def _get_lock_dir() -> Path:
     """Return the machine-local directory for token-scoped gateway locks."""
-    override = os.getenv("HERMES_GATEWAY_LOCK_DIR")
+    override = os.getenv("RHEMIFY_GATEWAY_LOCK_DIR")
     if override:
         return Path(override)
     state_home = Path(os.getenv("XDG_STATE_HOME", Path.home() / ".local" / "state"))
-    return state_home / "hermes" / _LOCKS_DIRNAME
+    return state_home / "rhemify" / _LOCKS_DIRNAME
 
 
 def _utc_now_iso() -> str:
@@ -81,15 +81,15 @@ def _read_process_cmdline(pid: int) -> Optional[str]:
 
 
 def _looks_like_gateway_process(pid: int) -> bool:
-    """Return True when the live PID still looks like the Hermes gateway."""
+    """Return True when the live PID still looks like the Rhemify gateway."""
     cmdline = _read_process_cmdline(pid)
     if not cmdline:
         return False
 
     patterns = (
-        "hermes_cli.main gateway",
-        "hermes_cli/main.py gateway",
-        "hermes gateway",
+        "rhemify_cli.main gateway",
+        "rhemify_cli/main.py gateway",
+        "rhemify gateway",
         "gateway/run.py",
     )
     return any(pattern in cmdline for pattern in patterns)
@@ -106,9 +106,9 @@ def _record_looks_like_gateway(record: dict[str, Any]) -> bool:
 
     cmdline = " ".join(str(part) for part in argv)
     patterns = (
-        "hermes_cli.main gateway",
-        "hermes_cli/main.py gateway",
-        "hermes gateway",
+        "rhemify_cli.main gateway",
+        "rhemify_cli/main.py gateway",
+        "rhemify gateway",
         "gateway/run.py",
     )
     return any(pattern in cmdline for pattern in patterns)
@@ -238,7 +238,7 @@ def acquire_scoped_lock(scope: str, identity: str, metadata: Optional[dict[str, 
     """Acquire a machine-local lock keyed by scope + identity.
 
     Used to prevent multiple local gateways from using the same external identity
-    at once (e.g. the same Telegram bot token across different HERMES_HOME dirs).
+    at once (e.g. the same Telegram bot token across different RHEMIFY_HOME dirs).
     """
     lock_path = _get_scope_lock_path(scope, identity)
     lock_path.parent.mkdir(parents=True, exist_ok=True)

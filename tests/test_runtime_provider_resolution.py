@@ -1,4 +1,4 @@
-from hermes_cli import runtime_provider as rp
+from rhemify_cli import runtime_provider as rp
 
 
 def test_resolve_runtime_provider_uses_credential_pool(monkeypatch):
@@ -107,7 +107,7 @@ def test_resolve_runtime_provider_falls_back_when_pool_empty(monkeypatch):
             "provider": "openai-codex",
             "base_url": "https://chatgpt.com/backend-api/codex",
             "api_key": "codex-token",
-            "source": "hermes-auth-store",
+            "source": "rhemify-auth-store",
             "last_refresh": "2026-02-26T00:00:00Z",
         },
     )
@@ -530,7 +530,7 @@ def test_named_custom_provider_does_not_shadow_builtin_provider(monkeypatch):
         lambda: {
             "custom_providers": [
                 {
-                    "name": "nous",
+                    "name": "unused",
                     "base_url": "http://localhost:1234/v1",
                     "api_key": "shadow-key",
                 }
@@ -541,19 +541,19 @@ def test_named_custom_provider_does_not_shadow_builtin_provider(monkeypatch):
         rp,
         "resolve_nous_runtime_credentials",
         lambda **kwargs: {
-            "base_url": "https://inference-api.nousresearch.com/v1",
+            "base_url": "https://inference-api.example.com/v1",
             "api_key": "nous-runtime-key",
             "source": "portal",
             "expires_at": None,
         },
     )
 
-    resolved = rp.resolve_runtime_provider(requested="nous")
+    resolved = rp.resolve_runtime_provider(requested="unused")
 
-    assert resolved["provider"] == "nous"
-    assert resolved["base_url"] == "https://inference-api.nousresearch.com/v1"
+    assert resolved["provider"] == "unused"
+    assert resolved["base_url"] == "https://inference-api.example.com/v1"
     assert resolved["api_key"] == "nous-runtime-key"
-    assert resolved["requested_provider"] == "nous"
+    assert resolved["requested_provider"] == "unused"
 
 
 def test_explicit_openrouter_skips_openai_base_url(monkeypatch):
@@ -606,15 +606,15 @@ def test_explicit_openrouter_honors_openrouter_base_url_over_pool(monkeypatch):
 
 
 def test_resolve_requested_provider_precedence(monkeypatch):
-    monkeypatch.setenv("HERMES_INFERENCE_PROVIDER", "nous")
+    monkeypatch.setenv("RHEMIFY_INFERENCE_PROVIDER", "unused")
     monkeypatch.setattr(rp, "_get_model_config", lambda: {"provider": "openai-codex"})
     assert rp.resolve_requested_provider("openrouter") == "openrouter"
     assert rp.resolve_requested_provider() == "openai-codex"
 
     monkeypatch.setattr(rp, "_get_model_config", lambda: {})
-    assert rp.resolve_requested_provider() == "nous"
+    assert rp.resolve_requested_provider() == "unused"
 
-    monkeypatch.delenv("HERMES_INFERENCE_PROVIDER", raising=False)
+    monkeypatch.delenv("RHEMIFY_INFERENCE_PROVIDER", raising=False)
     assert rp.resolve_requested_provider() == "auto"
 
 
@@ -937,13 +937,13 @@ def test_named_custom_provider_anthropic_api_mode(monkeypatch):
 
 def test_resolve_provider_custom_returns_custom():
     """resolve_provider('custom') must return 'custom', not 'openrouter'."""
-    from hermes_cli.auth import resolve_provider
+    from rhemify_cli.auth import resolve_provider
     assert resolve_provider("custom") == "custom"
 
 
 def test_resolve_provider_openrouter_unchanged():
     """resolve_provider('openrouter') must still return 'openrouter'."""
-    from hermes_cli.auth import resolve_provider
+    from rhemify_cli.auth import resolve_provider
     assert resolve_provider("openrouter") == "openrouter"
 
 

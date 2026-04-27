@@ -13,9 +13,9 @@ from dataclasses import dataclass, fields, replace
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Set, Tuple
 
-from hermes_constants import OPENROUTER_BASE_URL
-import hermes_cli.auth as auth_mod
-from hermes_cli.auth import (
+from rhemify_constants import OPENROUTER_BASE_URL
+import rhemify_cli.auth as auth_mod
+from rhemify_cli.auth import (
     ACCESS_TOKEN_REFRESH_SKEW_SECONDS,
     CODEX_ACCESS_TOKEN_REFRESH_SKEW_SECONDS,
     DEFAULT_AGENT_KEY_MIN_TTL_SECONDS,
@@ -36,7 +36,7 @@ logger = logging.getLogger(__name__)
 def _load_config_safe() -> Optional[dict]:
     """Load config.yaml, returning None on any error."""
     try:
-        from hermes_cli.config import load_config
+        from rhemify_cli.config import load_config
 
         return load_config()
     except Exception:
@@ -156,13 +156,13 @@ class PooledCredential:
 
     @property
     def runtime_api_key(self) -> str:
-        if self.provider == "nous":
+        if self.provider == "unused":
             return str(self.agent_key or self.access_token or "")
         return str(self.access_token or "")
 
     @property
     def runtime_base_url(self) -> Optional[str]:
-        if self.provider == "nous":
+        if self.provider == "unused":
             return self.inference_base_url or self.base_url
         return self.base_url
 
@@ -452,7 +452,7 @@ class CredentialPool:
 
                 refreshed = refresh_anthropic_oauth_pure(
                     entry.refresh_token,
-                    use_json=entry.source.endswith("hermes_pkce"),
+                    use_json=entry.source.endswith("rhemify_pkce"),
                 )
                 updated = replace(
                     entry,
@@ -484,7 +484,7 @@ class CredentialPool:
                     refresh_token=refreshed["refresh_token"],
                     last_refresh=refreshed.get("last_refresh"),
                 )
-            elif self.provider == "nous":
+            elif self.provider == "unused":
                 nous_state = {
                     "access_token": entry.access_token,
                     "refresh_token": entry.refresh_token,
@@ -530,7 +530,7 @@ class CredentialPool:
                         from agent.anthropic_adapter import refresh_anthropic_oauth_pure
                         refreshed = refresh_anthropic_oauth_pure(
                             synced.refresh_token,
-                            use_json=synced.source.endswith("hermes_pkce"),
+                            use_json=synced.source.endswith("rhemify_pkce"),
                         )
                         updated = replace(
                             synced,
@@ -587,7 +587,7 @@ class CredentialPool:
                 entry.access_token,
                 CODEX_ACCESS_TOKEN_REFRESH_SKEW_SECONDS,
             )
-        if self.provider == "nous":
+        if self.provider == "unused":
             # Nous refresh/mint can require network access and should happen when
             # runtime credentials are actually resolved, not merely when the pool
             # is enumerated for listing, migration, or selection.
@@ -622,7 +622,7 @@ class CredentialPool:
         for entry in self._entries:
             # For anthropic claude_code entries, sync from the credentials file
             # before any status/refresh checks. This picks up tokens refreshed
-            # by other processes (Claude Code CLI, other Hermes profiles).
+            # by other processes (Claude Code CLI, other Rhemify profiles).
             if (self.provider == "anthropic" and entry.source == "claude_code"
                     and entry.last_status == STATUS_EXHAUSTED):
                 synced = self._sync_anthropic_entry_from_credentials_file(entry)
@@ -842,7 +842,7 @@ def _normalize_pool_priorities(provider: str, entries: List[PooledCredential]) -
     source_rank = {
         "env:ANTHROPIC_TOKEN": 0,
         "env:CLAUDE_CODE_OAUTH_TOKEN": 1,
-        "hermes_pkce": 2,
+        "rhemify_pkce": 2,
         "claude_code": 3,
         "env:ANTHROPIC_API_KEY": 4,
     }
@@ -875,10 +875,10 @@ def _seed_from_singletons(provider: str, entries: List[PooledCredential]) -> Tup
     auth_store = _load_auth_store()
 
     if provider == "anthropic":
-        from agent.anthropic_adapter import read_claude_code_credentials, read_hermes_oauth_credentials
+        from agent.anthropic_adapter import read_claude_code_credentials, read_rhemify_oauth_credentials
 
         for source_name, creds in (
-            ("hermes_pkce", read_hermes_oauth_credentials()),
+            ("rhemify_pkce", read_rhemify_oauth_credentials()),
             ("claude_code", read_claude_code_credentials()),
         ):
             if creds and creds.get("accessToken"):
@@ -897,8 +897,8 @@ def _seed_from_singletons(provider: str, entries: List[PooledCredential]) -> Tup
                     },
                 )
 
-    elif provider == "nous":
-        state = _load_provider_state(auth_store, "nous")
+    elif provider == "unused":
+        state = _load_provider_state(auth_store, "unused")
         if state:
             active_sources.add("device_code")
             changed |= _upsert_entry(
@@ -1015,7 +1015,7 @@ def _prune_stale_seeded_entries(entries: List[PooledCredential], active_sources:
         or entry.source in active_sources
         or not (
             entry.source.startswith("env:")
-            or entry.source in {"claude_code", "hermes_pkce"}
+            or entry.source in {"claude_code", "rhemify_pkce"}
         )
     ]
     if len(retained) == len(entries):

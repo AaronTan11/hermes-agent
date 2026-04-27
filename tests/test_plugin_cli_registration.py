@@ -16,7 +16,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from hermes_cli.plugins import (
+from rhemify_cli.plugins import (
     PluginContext,
     PluginManager,
     PluginManifest,
@@ -68,7 +68,7 @@ class TestGetPluginCliCommands:
     def test_returns_dict(self):
         mgr = PluginManager()
         mgr._cli_commands["foo"] = {"name": "foo", "help": "bar"}
-        with patch("hermes_cli.plugins.get_plugin_manager", return_value=mgr):
+        with patch("rhemify_cli.plugins.get_plugin_manager", return_value=mgr):
             cmds = get_plugin_cli_commands()
         assert cmds == {"foo": {"name": "foo", "help": "bar"}}
         # Top-level is a copy — adding to result doesn't affect manager
@@ -215,7 +215,7 @@ class TestHonchoRegisterCli:
         assert args.honcho_command == "status"
 
     def test_setup_redirects_to_memory_setup(self):
-        """hermes honcho setup redirects to memory setup."""
+        """rhemify honcho setup redirects to memory setup."""
         from plugins.memory.honcho.cli import register_cli
 
         parser = argparse.ArgumentParser()

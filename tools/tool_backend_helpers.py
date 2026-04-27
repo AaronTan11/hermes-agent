@@ -13,9 +13,9 @@ _DEFAULT_MODAL_MODE = "auto"
 _VALID_MODAL_MODES = {"auto", "direct", "managed"}
 
 
-def managed_nous_tools_enabled() -> bool:
+def managed_tools_enabled() -> bool:
     """Return True when the hidden Nous-managed tools feature flag is enabled."""
-    return env_var_enabled("HERMES_ENABLE_NOUS_MANAGED_TOOLS")
+    return env_var_enabled("RHEMIFY_ENABLE_NOUS_MANAGED_TOOLS")
 
 
 def normalize_browser_cloud_provider(value: object | None) -> str:
@@ -61,15 +61,15 @@ def resolve_modal_backend_state(
     requested_mode = coerce_modal_mode(modal_mode)
     normalized_mode = normalize_modal_mode(modal_mode)
     managed_mode_blocked = (
-        requested_mode == "managed" and not managed_nous_tools_enabled()
+        requested_mode == "managed" and not managed_tools_enabled()
     )
 
     if normalized_mode == "managed":
-        selected_backend = "managed" if managed_nous_tools_enabled() and managed_ready else None
+        selected_backend = "managed" if managed_tools_enabled() and managed_ready else None
     elif normalized_mode == "direct":
         selected_backend = "direct" if has_direct else None
     else:
-        selected_backend = "managed" if managed_nous_tools_enabled() and managed_ready else "direct" if has_direct else None
+        selected_backend = "managed" if managed_tools_enabled() and managed_ready else "direct" if has_direct else None
 
     return {
         "requested_mode": requested_mode,

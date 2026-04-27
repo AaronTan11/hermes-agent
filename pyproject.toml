@@ -3,12 +3,11 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "hermes-agent"
+name = "rhemify"
 version = "0.7.0"
-description = "The self-improving AI agent — creates skills from experience, improves them during use, and runs anywhere"
-readme = "README.md"
+description = "Personal AI agent"
 requires-python = ">=3.11"
-authors = [{ name = "Nous Research" }]
+authors = [{ name = "Aaron Tan" }]
 license = { text = "MIT" }
 dependencies = [
   # Core — pinned to known-good ranges to limit supply chain attack surface
@@ -32,7 +31,7 @@ dependencies = [
   "fal-client>=0.13.1,<1",
   # Text-to-speech (Edge TTS is free, no API key needed)
   "edge-tts>=7.2.7,<8",
-  # Skills Hub (GitHub App JWT auth — optional, only needed for bot identity)
+  # GitHub App JWT auth — optional, only needed for bot identity
   "PyJWT[crypto]>=2.12.0,<3",  # CVE-2026-32597
 ]
 
@@ -74,40 +73,40 @@ rl = [
 ]
 yc-bench = ["yc-bench @ git+https://github.com/collinear-ai/yc-bench.git ; python_version >= '3.12'"]
 all = [
-  "hermes-agent[modal]",
-  "hermes-agent[daytona]",
-  "hermes-agent[messaging]",
+  "rhemify[modal]",
+  "rhemify[daytona]",
+  "rhemify[messaging]",
   # matrix excluded: python-olm (required by matrix-nio[e2e]) is upstream-broken
   # on modern macOS (archived libolm, C++ errors with Clang 21+). Including it
   # here causes the entire [all] install to fail, dropping all other extras.
-  # Users who need Matrix can install manually: pip install 'hermes-agent[matrix]'
-  "hermes-agent[cron]",
-  "hermes-agent[cli]",
-  "hermes-agent[dev]",
-  "hermes-agent[tts-premium]",
-  "hermes-agent[slack]",
-  "hermes-agent[pty]",
-  "hermes-agent[honcho]",
-  "hermes-agent[mcp]",
-  "hermes-agent[homeassistant]",
-  "hermes-agent[sms]",
-  "hermes-agent[acp]",
-  "hermes-agent[voice]",
-  "hermes-agent[dingtalk]",
-  "hermes-agent[feishu]",
-  "hermes-agent[sdk]",
+  # Users who need Matrix can install manually: pip install 'rhemify[matrix]'
+  "rhemify[cron]",
+  "rhemify[cli]",
+  "rhemify[dev]",
+  "rhemify[tts-premium]",
+  "rhemify[slack]",
+  "rhemify[pty]",
+  "rhemify[honcho]",
+  "rhemify[mcp]",
+  "rhemify[homeassistant]",
+  "rhemify[sms]",
+  "rhemify[acp]",
+  "rhemify[voice]",
+  "rhemify[dingtalk]",
+  "rhemify[feishu]",
+  "rhemify[sdk]",
 ]
 
 [project.scripts]
-hermes = "hermes_cli.main:main"
-hermes-agent = "run_agent:main"
-hermes-acp = "acp_adapter.entry:main"
+rhemify = "rhemify_cli.main:main"
+rhemify-agent = "run_agent:main"
+rhemify-acp = "acp_adapter.entry:main"
 
 [tool.setuptools]
-py-modules = ["run_agent", "model_tools", "toolsets", "batch_runner", "trajectory_compressor", "toolset_distributions", "cli", "hermes_constants", "hermes_state", "hermes_time", "rl_cli", "utils"]
+py-modules = ["run_agent", "model_tools", "toolsets", "batch_runner", "trajectory_compressor", "toolset_distributions", "cli", "rhemify_constants", "rhemify_state", "rhemify_time", "rl_cli", "utils"]
 
 [tool.setuptools.packages.find]
-include = ["agent", "tools", "tools.*", "hermes_cli", "gateway", "gateway.*", "cron", "acp_adapter", "plugins", "plugins.*"]
+include = ["agent", "tools", "tools.*", "rhemify_cli", "gateway", "gateway.*", "cron", "acp_adapter", "plugins", "plugins.*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -29,25 +29,25 @@ def _reset_modules(prefixes: tuple[str, ...]):
 
 @pytest.fixture(autouse=True)
 def _restore_tool_modules():
-    original_hermes_home = os.environ.get("HERMES_HOME")
+    original_rhemify_home = os.environ.get("RHEMIFY_HOME")
     original_modules = {
         name: module
         for name, module in sys.modules.items()
         if name == "tools"
         or name.startswith("tools.")
-        or name == "hermes_cli"
-        or name.startswith("hermes_cli.")
+        or name == "rhemify_cli"
+        or name.startswith("rhemify_cli.")
         or name == "modal"
         or name.startswith("modal.")
     }
     try:
         yield
     finally:
-        if original_hermes_home is None:
-            os.environ.pop("HERMES_HOME", None)
+        if original_rhemify_home is None:
+            os.environ.pop("RHEMIFY_HOME", None)
         else:
-            os.environ["HERMES_HOME"] = original_hermes_home
-        _reset_modules(("tools", "hermes_cli", "modal"))
+            os.environ["RHEMIFY_HOME"] = original_rhemify_home
+        _reset_modules(("tools", "rhemify_cli", "modal"))
         sys.modules.update(original_modules)
 
 
@@ -57,15 +57,15 @@ def _install_modal_test_modules(
     fail_on_snapshot_ids: set[str] | None = None,
     snapshot_id: str = "im-fresh",
 ):
-    _reset_modules(("tools", "hermes_cli", "modal"))
+    _reset_modules(("tools", "rhemify_cli", "modal"))
 
-    hermes_cli = types.ModuleType("hermes_cli")
-    hermes_cli.__path__ = []  # type: ignore[attr-defined]
-    sys.modules["hermes_cli"] = hermes_cli
-    hermes_home = tmp_path / "hermes-home"
-    os.environ["HERMES_HOME"] = str(hermes_home)
-    sys.modules["hermes_cli.config"] = types.SimpleNamespace(
-        get_hermes_home=lambda: hermes_home,
+    rhemify_cli = types.ModuleType("rhemify_cli")
+    rhemify_cli.__path__ = []  # type: ignore[attr-defined]
+    sys.modules["rhemify_cli"] = rhemify_cli
+    rhemify_home = tmp_path / "rhemify-home"
+    os.environ["RHEMIFY_HOME"] = str(rhemify_home)
+    sys.modules["rhemify_cli.config"] = types.SimpleNamespace(
+        get_rhemify_home=lambda: rhemify_home,
     )
 
     tools_package = types.ModuleType("tools")
@@ -108,7 +108,7 @@ def _install_modal_test_modules(
             return {"kind": "registry", "image": image}
 
     async def _lookup_aio(_name: str, create_if_missing: bool = False):
-        return types.SimpleNamespace(name="hermes-agent", create_if_missing=create_if_missing)
+        return types.SimpleNamespace(name="rhemify", create_if_missing=create_if_missing)
 
     class _FakeSandboxInstance:
         def __init__(self, image):
@@ -154,7 +154,7 @@ def _install_modal_test_modules(
     )
 
     return {
-        "snapshot_store": hermes_home / "modal_snapshots.json",
+        "snapshot_store": rhemify_home / "modal_snapshots.json",
         "create_calls": create_calls,
         "from_id_calls": from_id_calls,
         "registry_calls": registry_calls,

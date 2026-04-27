@@ -44,7 +44,7 @@ from datetime import datetime
 import fire
 from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskProgressColumn, TimeElapsedColumn, TimeRemainingColumn
 from rich.console import Console
-from hermes_constants import OPENROUTER_BASE_URL
+from rhemify_constants import OPENROUTER_BASE_URL
 
 # Load environment variables
 from dotenv import load_dotenv
@@ -364,7 +364,7 @@ class TrajectoryCompressor:
             if client is None:
                 raise RuntimeError(
                     f"Provider '{provider}' is not configured. "
-                    f"Check your API key or run: hermes setup")
+                    f"Check your API key or run: rhemify setup")
             self.client = None  # Not used directly
             self.async_client = None  # Not used directly
         else:
@@ -408,8 +408,8 @@ class TrajectoryCompressor:
         url = (self.config.base_url or "").lower()
         if "openrouter" in url:
             return "openrouter"
-        if "nousresearch.com" in url:
-            return "nous"
+        if "example.com" in url:
+            return "unused"
         if "chatgpt.com/backend-api/codex" in url:
             return "codex"
         if "api.z.ai" in url:

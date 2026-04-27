@@ -166,7 +166,7 @@ class TestBuildFromSessions:
             },
         })
 
-        with patch.dict(os.environ, {"HERMES_HOME": str(tmp_path)}):
+        with patch.dict(os.environ, {"RHEMIFY_HOME": str(tmp_path)}):
             entries = _build_from_sessions("telegram")
 
         assert len(entries) == 2
@@ -175,7 +175,7 @@ class TestBuildFromSessions:
         assert "Bob" in names
 
     def test_missing_sessions_file(self, tmp_path):
-        with patch.dict(os.environ, {"HERMES_HOME": str(tmp_path)}):
+        with patch.dict(os.environ, {"RHEMIFY_HOME": str(tmp_path)}):
             entries = _build_from_sessions("telegram")
         assert entries == []
 
@@ -185,7 +185,7 @@ class TestBuildFromSessions:
             "s2": {"origin": {"platform": "telegram", "chat_id": "123", "chat_name": "X"}},
         })
 
-        with patch.dict(os.environ, {"HERMES_HOME": str(tmp_path)}):
+        with patch.dict(os.environ, {"RHEMIFY_HOME": str(tmp_path)}):
             entries = _build_from_sessions("telegram")
 
         assert len(entries) == 1
@@ -216,7 +216,7 @@ class TestBuildFromSessions:
             },
         })
 
-        with patch.dict(os.environ, {"HERMES_HOME": str(tmp_path)}):
+        with patch.dict(os.environ, {"RHEMIFY_HOME": str(tmp_path)}):
             entries = _build_from_sessions("telegram")
 
         ids = {entry["id"] for entry in entries}

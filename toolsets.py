@@ -28,7 +28,7 @@ from typing import List, Dict, Any, Set, Optional
 
 # Shared tool list for CLI and all messaging platform toolsets.
 # Edit this once to update all platforms simultaneously.
-_HERMES_CORE_TOOLS = [
+_RHEMIFY_CORE_TOOLS = [
     # Web
     "web_search", "web_extract",
     # Terminal + process management
@@ -219,13 +219,13 @@ TOOLSETS = {
     },
     
     # ==========================================================================
-    # Full Hermes toolsets (CLI + messaging platforms)
+    # Full Rhemify toolsets (CLI + messaging platforms)
     #
     # All platforms share the same core tools (including send_message,
     # which is gated on gateway running via its check_fn).
     # ==========================================================================
 
-    "hermes-acp": {
+    "rhemify-acp": {
         "description": "Editor integration (VS Code, Zed, JetBrains) — coding-focused tools without messaging, audio, or clarify UI",
         "tools": [
             "web_search", "web_extract",
@@ -244,7 +244,7 @@ TOOLSETS = {
         "includes": []
     },
 
-    "hermes-api-server": {
+    "rhemify-api-server": {
         "description": "OpenAI-compatible API server — full agent tools accessible via HTTP (no interactive UI tools like clarify or send_message)",
         "tools": [
             # Web
@@ -279,100 +279,100 @@ TOOLSETS = {
         "includes": []
     },
     
-    "hermes-cli": {
+    "rhemify-cli": {
         "description": "Full interactive CLI toolset - all default tools plus cronjob management",
-        "tools": _HERMES_CORE_TOOLS,
+        "tools": _RHEMIFY_CORE_TOOLS,
         "includes": []
     },
     
-    "hermes-telegram": {
+    "rhemify-telegram": {
         "description": "Telegram bot toolset - full access for personal use (terminal has safety checks)",
-        "tools": _HERMES_CORE_TOOLS,
+        "tools": _RHEMIFY_CORE_TOOLS,
         "includes": []
     },
     
-    "hermes-discord": {
+    "rhemify-discord": {
         "description": "Discord bot toolset - full access (terminal has safety checks via dangerous command approval)",
-        "tools": _HERMES_CORE_TOOLS,
+        "tools": _RHEMIFY_CORE_TOOLS,
         "includes": []
     },
     
-    "hermes-whatsapp": {
+    "rhemify-whatsapp": {
         "description": "WhatsApp bot toolset - similar to Telegram (personal messaging, more trusted)",
-        "tools": _HERMES_CORE_TOOLS,
+        "tools": _RHEMIFY_CORE_TOOLS,
         "includes": []
     },
     
-    "hermes-slack": {
+    "rhemify-slack": {
         "description": "Slack bot toolset - full access for workspace use (terminal has safety checks)",
-        "tools": _HERMES_CORE_TOOLS,
+        "tools": _RHEMIFY_CORE_TOOLS,
         "includes": []
     },
     
-    "hermes-signal": {
+    "rhemify-signal": {
         "description": "Signal bot toolset - encrypted messaging platform (full access)",
-        "tools": _HERMES_CORE_TOOLS,
+        "tools": _RHEMIFY_CORE_TOOLS,
         "includes": []
     },
 
-    "hermes-homeassistant": {
+    "rhemify-homeassistant": {
         "description": "Home Assistant bot toolset - smart home event monitoring and control",
-        "tools": _HERMES_CORE_TOOLS,
+        "tools": _RHEMIFY_CORE_TOOLS,
         "includes": []
     },
 
-    "hermes-email": {
-        "description": "Email bot toolset - interact with Hermes via email (IMAP/SMTP)",
-        "tools": _HERMES_CORE_TOOLS,
+    "rhemify-email": {
+        "description": "Email bot toolset - interact with Rhemify via email (IMAP/SMTP)",
+        "tools": _RHEMIFY_CORE_TOOLS,
         "includes": []
     },
 
-    "hermes-mattermost": {
+    "rhemify-mattermost": {
         "description": "Mattermost bot toolset - self-hosted team messaging (full access)",
-        "tools": _HERMES_CORE_TOOLS,
+        "tools": _RHEMIFY_CORE_TOOLS,
         "includes": []
     },
 
-    "hermes-matrix": {
+    "rhemify-matrix": {
         "description": "Matrix bot toolset - decentralized encrypted messaging (full access)",
-        "tools": _HERMES_CORE_TOOLS,
+        "tools": _RHEMIFY_CORE_TOOLS,
         "includes": []
     },
 
-    "hermes-dingtalk": {
+    "rhemify-dingtalk": {
         "description": "DingTalk bot toolset - enterprise messaging platform (full access)",
-        "tools": _HERMES_CORE_TOOLS,
+        "tools": _RHEMIFY_CORE_TOOLS,
         "includes": []
     },
 
-    "hermes-feishu": {
+    "rhemify-feishu": {
         "description": "Feishu/Lark bot toolset - enterprise messaging via Feishu/Lark (full access)",
-        "tools": _HERMES_CORE_TOOLS,
+        "tools": _RHEMIFY_CORE_TOOLS,
         "includes": []
     },
 
-    "hermes-wecom": {
+    "rhemify-wecom": {
         "description": "WeCom bot toolset - enterprise WeChat messaging (full access)",
-        "tools": _HERMES_CORE_TOOLS,
+        "tools": _RHEMIFY_CORE_TOOLS,
         "includes": []
     },
 
-    "hermes-sms": {
-        "description": "SMS bot toolset - interact with Hermes via SMS (Twilio)",
-        "tools": _HERMES_CORE_TOOLS,
+    "rhemify-sms": {
+        "description": "SMS bot toolset - interact with Rhemify via SMS (Twilio)",
+        "tools": _RHEMIFY_CORE_TOOLS,
         "includes": []
     },
 
-    "hermes-webhook": {
+    "rhemify-webhook": {
         "description": "Webhook toolset - receive and process external webhook events",
-        "tools": _HERMES_CORE_TOOLS,
+        "tools": _RHEMIFY_CORE_TOOLS,
         "includes": []
     },
 
-    "hermes-gateway": {
+    "rhemify-gateway": {
         "description": "Gateway toolset - union of all messaging platform tools",
         "tools": [],
-        "includes": ["hermes-telegram", "hermes-discord", "hermes-whatsapp", "hermes-slack", "hermes-signal", "hermes-homeassistant", "hermes-email", "hermes-sms", "hermes-mattermost", "hermes-matrix", "hermes-dingtalk", "hermes-feishu", "hermes-wecom", "hermes-webhook"]
+        "includes": ["rhemify-telegram", "rhemify-discord", "rhemify-whatsapp", "rhemify-slack", "rhemify-signal", "rhemify-homeassistant", "rhemify-email", "rhemify-sms", "rhemify-mattermost", "rhemify-matrix", "rhemify-dingtalk", "rhemify-feishu", "rhemify-wecom", "rhemify-webhook"]
     }
 }
 

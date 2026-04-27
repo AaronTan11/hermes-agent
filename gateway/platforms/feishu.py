@@ -7,12 +7,12 @@ Supports:
 - Inbound image/file/audio/media caching
 - Gateway allowlist integration via FEISHU_ALLOWED_USERS
 - Persistent dedup state across restarts
-- Per-chat serial message processing (matches openclaw createChatQueue)
+- Per-chat serial message processing (matches upstream createChatQueue)
 - Persistent ACK emoji reaction on inbound messages
-- Reaction events routed as synthetic text events (matches openclaw)
+- Reaction events routed as synthetic text events (matches upstream)
 - Interactive card button-click events routed as synthetic COMMAND events
-- Webhook anomaly tracking (matches openclaw createWebhookAnomalyTracker)
-- Verification token validation as second auth layer (matches openclaw)
+- Webhook anomaly tracking (matches upstream createWebhookAnomalyTracker)
+- Verification token validation as second auth layer (matches upstream)
 """
 
 from __future__ import annotations
@@ -99,7 +99,7 @@ from gateway.platforms.base import (
     cache_image_from_bytes,
 )
 from gateway.status import acquire_scoped_lock, release_scoped_lock
-from hermes_constants import get_hermes_home
+from rhemify_constants import get_rhemify_home
 
 logger = logging.getLogger(__name__)
 
@@ -156,15 +156,15 @@ _DEFAULT_WEBHOOK_PATH = "/feishu/webhook"
 # TTL, rate-limit and webhook security constants
 # ---------------------------------------------------------------------------
 
-_FEISHU_DEDUP_TTL_SECONDS = 24 * 60 * 60          # 24 hours — matches openclaw
+_FEISHU_DEDUP_TTL_SECONDS = 24 * 60 * 60          # 24 hours — matches upstream
 _FEISHU_SENDER_NAME_TTL_SECONDS = 10 * 60          # 10 minutes sender-name cache
 _FEISHU_WEBHOOK_MAX_BODY_BYTES = 1 * 1024 * 1024   # 1 MB body limit
 _FEISHU_WEBHOOK_RATE_WINDOW_SECONDS = 60            # sliding window for rate limiter
-_FEISHU_WEBHOOK_RATE_LIMIT_MAX = 120               # max requests per window per IP — matches openclaw
+_FEISHU_WEBHOOK_RATE_LIMIT_MAX = 120               # max requests per window per IP — matches upstream
 _FEISHU_WEBHOOK_RATE_MAX_KEYS = 4096               # max tracked keys (prevents unbounded growth)
 _FEISHU_WEBHOOK_BODY_TIMEOUT_SECONDS = 30          # max seconds to read request body
 _FEISHU_WEBHOOK_ANOMALY_THRESHOLD = 25             # consecutive error responses before WARNING log
-_FEISHU_WEBHOOK_ANOMALY_TTL_SECONDS = 6 * 60 * 60  # anomaly tracker TTL (6 hours) — matches openclaw
+_FEISHU_WEBHOOK_ANOMALY_TTL_SECONDS = 6 * 60 * 60  # anomaly tracker TTL (6 hours) — matches upstream
 _FEISHU_CARD_ACTION_DEDUP_TTL_SECONDS = 15 * 60    # card action token dedup window (15 min)
 _FEISHU_BOT_MSG_TRACK_SIZE = 512                   # LRU size for tracking sent message IDs
 _FEISHU_REPLY_FALLBACK_CODES = frozenset({230011, 231003})  # reply target withdrawn/missing → create fallback
@@ -951,7 +951,7 @@ class FeishuAdapter(BasePlatformAdapter):
         self._event_handler = self._build_event_handler()
         self._seen_message_ids: Dict[str, float] = {}  # message_id → seen_at (time.time())
         self._seen_message_order: List[str] = []
-        self._dedup_state_path = get_hermes_home() / "feishu_seen_message_ids.json"
+        self._dedup_state_path = get_rhemify_home() / "feishu_seen_message_ids.json"
         self._dedup_lock = threading.Lock()
         self._sender_name_cache: Dict[str, tuple[str, float]] = {}  # sender_id → (name, expire_at)
         self._webhook_rate_counts: Dict[str, tuple[int, float]] = {}  # rate_key → (count, window_start)
@@ -994,21 +994,21 @@ class FeishuAdapter(BasePlatformAdapter):
             bot_name=os.getenv("FEISHU_BOT_NAME", "").strip(),
             dedup_cache_size=max(
                 32,
-                int(os.getenv("HERMES_FEISHU_DEDUP_CACHE_SIZE", str(_DEFAULT_DEDUP_CACHE_SIZE))),
+                int(os.getenv("RHEMIFY_FEISHU_DEDUP_CACHE_SIZE", str(_DEFAULT_DEDUP_CACHE_SIZE))),
             ),
             text_batch_delay_seconds=float(
-                os.getenv("HERMES_FEISHU_TEXT_BATCH_DELAY_SECONDS", str(_DEFAULT_TEXT_BATCH_DELAY_SECONDS))
+                os.getenv("RHEMIFY_FEISHU_TEXT_BATCH_DELAY_SECONDS", str(_DEFAULT_TEXT_BATCH_DELAY_SECONDS))
             ),
             text_batch_max_messages=max(
                 1,
-                int(os.getenv("HERMES_FEISHU_TEXT_BATCH_MAX_MESSAGES", str(_DEFAULT_TEXT_BATCH_MAX_MESSAGES))),
+                int(os.getenv("RHEMIFY_FEISHU_TEXT_BATCH_MAX_MESSAGES", str(_DEFAULT_TEXT_BATCH_MAX_MESSAGES))),
             ),
             text_batch_max_chars=max(
                 1,
-                int(os.getenv("HERMES_FEISHU_TEXT_BATCH_MAX_CHARS", str(_DEFAULT_TEXT_BATCH_MAX_CHARS))),
+                int(os.getenv("RHEMIFY_FEISHU_TEXT_BATCH_MAX_CHARS", str(_DEFAULT_TEXT_BATCH_MAX_CHARS))),
             ),
             media_batch_delay_seconds=float(
-                os.getenv("HERMES_FEISHU_MEDIA_BATCH_DELAY_SECONDS", str(_DEFAULT_MEDIA_BATCH_DELAY_SECONDS))
+                os.getenv("RHEMIFY_FEISHU_MEDIA_BATCH_DELAY_SECONDS", str(_DEFAULT_MEDIA_BATCH_DELAY_SECONDS))
             ),
             webhook_host=str(
                 extra.get("webhook_host") or os.getenv("FEISHU_WEBHOOK_HOST", _DEFAULT_WEBHOOK_HOST)
@@ -1088,7 +1088,7 @@ class FeishuAdapter(BasePlatformAdapter):
             if not acquired:
                 owner_pid = existing.get("pid") if isinstance(existing, dict) else None
                 message = (
-                    "Another local Hermes gateway is already using this Feishu app_id"
+                    "Another local Rhemify gateway is already using this Feishu app_id"
                     + (f" (PID {owner_pid})." if owner_pid else ".")
                     + " Stop the other gateway before starting a second Feishu websocket client."
                 )
@@ -1516,7 +1516,7 @@ class FeishuAdapter(BasePlatformAdapter):
         )
 
     def _on_message_read_event(self, data: P2ImMessageMessageReadV1) -> None:
-        """Ignore read-receipt events that Hermes does not act on."""
+        """Ignore read-receipt events that Rhemify does not act on."""
         event = getattr(data, "event", None)
         message = getattr(event, "message", None)
         message_id = getattr(message, "message_id", None) or ""
@@ -1552,7 +1552,7 @@ class FeishuAdapter(BasePlatformAdapter):
             emoji_type,
         )
         # Only process reactions from real users. Ignore app/bot-generated reactions
-        # and Hermes' own ACK emoji to avoid feedback loops.
+        # and Rhemify' own ACK emoji to avoid feedback loops.
         if (
             operator_type in {"bot", "app"}
             or emoji_type == _FEISHU_ACK_EMOJI
@@ -1717,7 +1717,7 @@ class FeishuAdapter(BasePlatformAdapter):
         and a persistent ACK emoji reaction before processing starts.
 
         - Per-chat lock: ensures messages in the same chat are processed one at a time
-          (matches openclaw's createChatQueue serial queue behaviour).
+          (matches upstream's createChatQueue serial queue behaviour).
         - ACK indicator: adds a CHECK reaction to the triggering message before handing
           off to the agent and leaves it in place as a receipt marker.
         """
@@ -1770,7 +1770,7 @@ class FeishuAdapter(BasePlatformAdapter):
     def _record_webhook_anomaly(self, remote_ip: str, status: str) -> None:
         """Increment the anomaly counter for remote_ip and emit a WARNING every threshold hits.
 
-        Mirrors openclaw's createWebhookAnomalyTracker: TTL 6 hours, log every 25 consecutive
+        Mirrors upstream's createWebhookAnomalyTracker: TTL 6 hours, log every 25 consecutive
         error responses from the same IP.
         """
         now = time.time()
@@ -1968,7 +1968,7 @@ class FeishuAdapter(BasePlatformAdapter):
             response = await client.get(
                 file_url,
                 headers={
-                    "User-Agent": "Mozilla/5.0 (compatible; HermesAgent/1.0)",
+                    "User-Agent": "Mozilla/5.0 (compatible; RhemifyAgent/1.0)",
                     "Accept": "*/*",
                 },
             )
@@ -2007,7 +2007,7 @@ class FeishuAdapter(BasePlatformAdapter):
     async def _handle_webhook_request(self, request: Any) -> Any:
         remote_ip = (getattr(request, "remote", None) or "unknown")
 
-        # Rate limiting — composite key: app_id:path:remote_ip (matches openclaw key structure).
+        # Rate limiting — composite key: app_id:path:remote_ip (matches upstream key structure).
         rate_key = f"{self._app_id}:{self._webhook_path}:{remote_ip}"
         if not self._check_webhook_rate_limit(rate_key):
             logger.warning("[Feishu] Webhook rate limit exceeded for %s", remote_ip)
@@ -2058,7 +2058,7 @@ class FeishuAdapter(BasePlatformAdapter):
         if payload.get("type") == "url_verification":
             return web.json_response({"challenge": payload.get("challenge", "")})
 
-        # Verification token check — second layer of defence beyond signature (matches openclaw).
+        # Verification token check — second layer of defence beyond signature (matches upstream).
         if self._verification_token:
             header = payload.get("header") or {}
             incoming_token = str(header.get("token") or payload.get("token") or "")
@@ -2074,7 +2074,7 @@ class FeishuAdapter(BasePlatformAdapter):
             return web.Response(status=401, text="Invalid signature")
 
         if payload.get("encrypt"):
-            logger.error("[Feishu] Encrypted webhook payloads are not supported by Hermes webhook mode")
+            logger.error("[Feishu] Encrypted webhook payloads are not supported by Rhemify webhook mode")
             self._record_webhook_anomaly(remote_ip, "400-encrypted")
             return web.json_response({"code": 400, "msg": "encrypted webhook payloads are not supported"}, status=400)
 
@@ -2122,7 +2122,7 @@ class FeishuAdapter(BasePlatformAdapter):
     def _check_webhook_rate_limit(self, rate_key: str) -> bool:
         """Return False when the composite rate_key has exceeded _FEISHU_WEBHOOK_RATE_LIMIT_MAX.
 
-        The rate_key is composed as "{app_id}:{path}:{remote_ip}" — matching openclaw's key
+        The rate_key is composed as "{app_id}:{path}:{remote_ip}" — matching upstream's key
         structure so the limit is scoped to a specific (account, endpoint, IP) triple rather
         than a bare IP, which causes fewer false-positive denials in multi-tenant setups.
 
@@ -2565,7 +2565,7 @@ class FeishuAdapter(BasePlatformAdapter):
     async def _resolve_sender_name_from_api(self, sender_id: Optional[str]) -> Optional[str]:
         """Fetch the sender's display name from the Feishu contact API with a 10-minute cache.
 
-        ID-type detection mirrors openclaw: ou_ → open_id, on_ → union_id, else user_id.
+        ID-type detection mirrors upstream: ou_ → open_id, on_ → union_id, else user_id.
         Failures are silently suppressed; the message pipeline must not block on name resolution.
         """
         if not sender_id or not self._client:

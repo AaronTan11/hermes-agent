@@ -248,7 +248,7 @@ def _make_execute_only_env(forward_env=None):
     return env
 
 
-def test_execute_uses_hermes_dotenv_for_allowlisted_env(monkeypatch):
+def test_execute_uses_rhemify_dotenv_for_allowlisted_env(monkeypatch):
     env = _make_execute_only_env(["GITHUB_TOKEN"])
     popen_calls = []
 
@@ -257,7 +257,7 @@ def test_execute_uses_hermes_dotenv_for_allowlisted_env(monkeypatch):
         return _FakePopen(cmd, **kwargs)
 
     monkeypatch.delenv("GITHUB_TOKEN", raising=False)
-    monkeypatch.setattr(docker_env, "_load_hermes_env_vars", lambda: {"GITHUB_TOKEN": "value_from_dotenv"})
+    monkeypatch.setattr(docker_env, "_load_rhemify_env_vars", lambda: {"GITHUB_TOKEN": "value_from_dotenv"})
     monkeypatch.setattr(docker_env.subprocess, "Popen", _fake_popen)
 
     result = env.execute("echo hi")
@@ -266,7 +266,7 @@ def test_execute_uses_hermes_dotenv_for_allowlisted_env(monkeypatch):
     assert "GITHUB_TOKEN=value_from_dotenv" in popen_calls[0]
 
 
-def test_execute_prefers_shell_env_over_hermes_dotenv(monkeypatch):
+def test_execute_prefers_shell_env_over_rhemify_dotenv(monkeypatch):
     env = _make_execute_only_env(["GITHUB_TOKEN"])
     popen_calls = []
 
@@ -275,7 +275,7 @@ def test_execute_prefers_shell_env_over_hermes_dotenv(monkeypatch):
         return _FakePopen(cmd, **kwargs)
 
     monkeypatch.setenv("GITHUB_TOKEN", "value_from_shell")
-    monkeypatch.setattr(docker_env, "_load_hermes_env_vars", lambda: {"GITHUB_TOKEN": "value_from_dotenv"})
+    monkeypatch.setattr(docker_env, "_load_rhemify_env_vars", lambda: {"GITHUB_TOKEN": "value_from_dotenv"})
     monkeypatch.setattr(docker_env.subprocess, "Popen", _fake_popen)
 
     env.execute("echo hi")
@@ -331,7 +331,7 @@ def test_forward_env_overrides_docker_env(monkeypatch):
         return _FakePopen(cmd, **kwargs)
 
     monkeypatch.setenv("MY_KEY", "dynamic_value")
-    monkeypatch.setattr(docker_env, "_load_hermes_env_vars", lambda: {})
+    monkeypatch.setattr(docker_env, "_load_rhemify_env_vars", lambda: {})
     monkeypatch.setattr(docker_env.subprocess, "Popen", _fake_popen)
 
     env.execute("echo hi")
@@ -352,7 +352,7 @@ def test_docker_env_and_forward_env_merge(monkeypatch):
         return _FakePopen(cmd, **kwargs)
 
     monkeypatch.setenv("TOKEN", "secret123")
-    monkeypatch.setattr(docker_env, "_load_hermes_env_vars", lambda: {})
+    monkeypatch.setattr(docker_env, "_load_rhemify_env_vars", lambda: {})
     monkeypatch.setattr(docker_env.subprocess, "Popen", _fake_popen)
 
     env.execute("echo hi")

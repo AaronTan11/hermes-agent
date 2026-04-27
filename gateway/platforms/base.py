@@ -26,13 +26,13 @@ sys.path.insert(0, str(_Path(__file__).resolve().parents[2]))
 
 from gateway.config import Platform, PlatformConfig
 from gateway.session import SessionSource, build_session_key
-from hermes_cli.config import get_hermes_home
-from hermes_constants import get_hermes_dir
+from rhemify_cli.config import get_rhemify_home
+from rhemify_constants import get_rhemify_dir
 
 
 GATEWAY_SECRET_CAPTURE_UNSUPPORTED_MESSAGE = (
     "Secure secret entry is not supported over messaging. "
-    "Load this skill in the local CLI to be prompted, or add the key to ~/.hermes/.env manually."
+    "Load this skill in the local CLI to be prompted, or add the key to ~/.rhemify/.env manually."
 )
 
 
@@ -45,8 +45,8 @@ GATEWAY_SECRET_CAPTURE_UNSUPPORTED_MESSAGE = (
 # (e.g. Telegram file URLs expire after ~1 hour).
 # ---------------------------------------------------------------------------
 
-# Default location: {HERMES_HOME}/cache/images/ (legacy: image_cache/)
-IMAGE_CACHE_DIR = get_hermes_dir("cache/images", "image_cache")
+# Default location: {RHEMIFY_HOME}/cache/images/ (legacy: image_cache/)
+IMAGE_CACHE_DIR = get_rhemify_dir("cache/images", "image_cache")
 
 
 def get_image_cache_dir() -> Path:
@@ -100,7 +100,7 @@ async def cache_image_from_url(url: str, ext: str = ".jpg", retries: int = 2) ->
                 response = await client.get(
                     url,
                     headers={
-                        "User-Agent": "Mozilla/5.0 (compatible; HermesAgent/1.0)",
+                        "User-Agent": "Mozilla/5.0 (compatible; RhemifyAgent/1.0)",
                         "Accept": "image/*,*/*;q=0.8",
                     },
                 )
@@ -148,7 +148,7 @@ def cleanup_image_cache(max_age_hours: int = 24) -> int:
 # here so the STT tool (OpenAI Whisper) can transcribe them from local files.
 # ---------------------------------------------------------------------------
 
-AUDIO_CACHE_DIR = get_hermes_dir("cache/audio", "audio_cache")
+AUDIO_CACHE_DIR = get_rhemify_dir("cache/audio", "audio_cache")
 
 
 def get_audio_cache_dir() -> Path:
@@ -202,7 +202,7 @@ async def cache_audio_from_url(url: str, ext: str = ".ogg", retries: int = 2) ->
                 response = await client.get(
                     url,
                     headers={
-                        "User-Agent": "Mozilla/5.0 (compatible; HermesAgent/1.0)",
+                        "User-Agent": "Mozilla/5.0 (compatible; RhemifyAgent/1.0)",
                         "Accept": "audio/*,*/*;q=0.8",
                     },
                 )
@@ -229,7 +229,7 @@ async def cache_audio_from_url(url: str, ext: str = ".ogg", retries: int = 2) ->
 # here so the agent can reference them by local file path.
 # ---------------------------------------------------------------------------
 
-DOCUMENT_CACHE_DIR = get_hermes_dir("cache/documents", "document_cache")
+DOCUMENT_CACHE_DIR = get_rhemify_dir("cache/documents", "document_cache")
 
 SUPPORTED_DOCUMENT_TYPES = {
     ".pdf": "application/pdf",
@@ -1140,17 +1140,17 @@ class BasePlatformAdapter(ABC):
         Return a random delay in seconds for human-like response pacing.
 
         Reads from env vars:
-          HERMES_HUMAN_DELAY_MODE: "off" (default) | "natural" | "custom"
-          HERMES_HUMAN_DELAY_MIN_MS: minimum delay in ms (default 800, custom mode)
-          HERMES_HUMAN_DELAY_MAX_MS: maximum delay in ms (default 2500, custom mode)
+          RHEMIFY_HUMAN_DELAY_MODE: "off" (default) | "natural" | "custom"
+          RHEMIFY_HUMAN_DELAY_MIN_MS: minimum delay in ms (default 800, custom mode)
+          RHEMIFY_HUMAN_DELAY_MAX_MS: maximum delay in ms (default 2500, custom mode)
         """
         import random
 
-        mode = os.getenv("HERMES_HUMAN_DELAY_MODE", "off").lower()
+        mode = os.getenv("RHEMIFY_HUMAN_DELAY_MODE", "off").lower()
         if mode == "off":
             return 0.0
-        min_ms = int(os.getenv("HERMES_HUMAN_DELAY_MIN_MS", "800"))
-        max_ms = int(os.getenv("HERMES_HUMAN_DELAY_MAX_MS", "2500"))
+        min_ms = int(os.getenv("RHEMIFY_HUMAN_DELAY_MIN_MS", "800"))
+        max_ms = int(os.getenv("RHEMIFY_HUMAN_DELAY_MAX_MS", "2500"))
         if mode == "natural":
             min_ms, max_ms = 800, 2500
         return random.uniform(min_ms / 1000.0, max_ms / 1000.0)

@@ -1,6 +1,6 @@
-"""CLI entry point for the hermes-agent ACP adapter.
+"""CLI entry point for the rhemify ACP adapter.
 
-Loads environment variables from ``~/.hermes/.env``, configures logging
+Loads environment variables from ``~/.rhemify/.env``, configures logging
 to write to stderr (so stdout is reserved for ACP JSON-RPC transport),
 and starts the ACP agent server.
 
@@ -8,9 +8,9 @@ Usage::
 
     python -m acp_adapter.entry
     # or
-    hermes acp
+    rhemify acp
     # or
-    hermes-acp
+    rhemify-acp
 """
 
 import asyncio
@@ -18,7 +18,7 @@ import logging
 import os
 import sys
 from pathlib import Path
-from hermes_constants import get_hermes_home
+from rhemify_constants import get_rhemify_home
 
 
 def _setup_logging() -> None:
@@ -42,17 +42,17 @@ def _setup_logging() -> None:
 
 
 def _load_env() -> None:
-    """Load .env from HERMES_HOME (default ``~/.hermes``)."""
-    from hermes_cli.env_loader import load_hermes_dotenv
+    """Load .env from RHEMIFY_HOME (default ``~/.rhemify``)."""
+    from rhemify_cli.env_loader import load_rhemify_dotenv
 
-    hermes_home = get_hermes_home()
-    loaded = load_hermes_dotenv(hermes_home=hermes_home)
+    rhemify_home = get_rhemify_home()
+    loaded = load_rhemify_dotenv(rhemify_home=rhemify_home)
     if loaded:
         for env_file in loaded:
             logging.getLogger(__name__).info("Loaded env from %s", env_file)
     else:
         logging.getLogger(__name__).info(
-            "No .env found at %s, using system env", hermes_home / ".env"
+            "No .env found at %s, using system env", rhemify_home / ".env"
         )
 
 
@@ -62,7 +62,7 @@ def main() -> None:
     _load_env()
 
     logger = logging.getLogger(__name__)
-    logger.info("Starting hermes-agent ACP adapter")
+    logger.info("Starting rhemify ACP adapter")
 
     # Ensure the project root is on sys.path so ``from run_agent import AIAgent`` works
     project_root = str(Path(__file__).resolve().parent.parent)
@@ -70,9 +70,9 @@ def main() -> None:
         sys.path.insert(0, project_root)
 
     import acp
-    from .server import HermesACPAgent
+    from .server import RhemifyACPAgent
 
-    agent = HermesACPAgent()
+    agent = RhemifyACPAgent()
     try:
         asyncio.run(acp.run_agent(agent, use_unstable_protocol=True))
     except KeyboardInterrupt:

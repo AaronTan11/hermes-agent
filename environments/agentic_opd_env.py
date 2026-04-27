@@ -5,7 +5,7 @@ AgenticOPDEnv — On-Policy Distillation for Agentic Tool-Calling Tasks
 First Atropos environment to populate the distill_token_ids / distill_logprobs
 fields on ScoredDataGroup, enabling on-policy distillation (OPD) training.
 
-Key idea (from OpenClaw-RL, Princeton 2026):
+Key idea (from upstream-RL, Princeton 2026):
   Every time an agent receives a next-state signal (tool result, error trace,
   test verdict), that signal contains hindsight information about how the
   agent's PREVIOUS response could have been better. This environment:
@@ -54,7 +54,7 @@ Usage:
         --openai.base_url http://localhost:8000/v1 \\
         --openai.model_name Qwen/Qwen3-4B
 
-Reference: Wang et al., "OpenClaw-RL: Train Any Agent Simply by Talking"
+Reference: Wang et al., "upstream-RL: Train Any Agent Simply by Talking"
            arXiv:2603.10165, March 2026
 """
 
@@ -75,7 +75,7 @@ from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
 from pydantic import Field
 
-# Ensure hermes-agent root is on path
+# Ensure rhemify root is on path
 _repo_root = Path(__file__).resolve().parent.parent
 if str(_repo_root) not in sys.path:
     sys.path.insert(0, str(_repo_root))
@@ -84,8 +84,8 @@ from atroposlib.envs.base import ScoredDataGroup, ScoredDataItem
 from atroposlib.envs.server_handling.server_manager import APIServerConfig
 from atroposlib.type_definitions import Item
 
-from environments.hermes_base_env import HermesAgentBaseEnv, HermesAgentEnvConfig
-from environments.agent_loop import AgentResult, HermesAgentLoop
+from environments.rhemify_base_env import RhemifyAgentBaseEnv, RhemifyAgentEnvConfig
+from environments.agent_loop import AgentResult, RhemifyAgentLoop
 from environments.tool_context import ToolContext
 
 logger = logging.getLogger(__name__)
@@ -215,7 +215,7 @@ BUILTIN_CODING_TASKS = [
 
 
 # ═══════════════════════════════════════════════════════════════════════
-# Hint extraction prompts (adapted from OpenClaw-RL)
+# Hint extraction prompts (adapted from upstream-RL)
 # ═══════════════════════════════════════════════════════════════════════
 
 _HINT_JUDGE_SYSTEM = (
@@ -315,7 +315,7 @@ def _append_hint_to_messages(messages: list[dict], hint: str) -> list[dict]:
 # ═══════════════════════════════════════════════════════════════════════
 
 
-class AgenticOPDConfig(HermesAgentEnvConfig):
+class AgenticOPDConfig(RhemifyAgentEnvConfig):
     """Configuration for the agentic OPD environment."""
 
     # --- OPD settings ---
@@ -376,7 +376,7 @@ class AgenticOPDConfig(HermesAgentEnvConfig):
 # ═══════════════════════════════════════════════════════════════════════
 
 
-class AgenticOPDEnv(HermesAgentBaseEnv):
+class AgenticOPDEnv(RhemifyAgentBaseEnv):
     """
     RL environment with on-policy distillation from next-state signals.
 
@@ -1039,7 +1039,7 @@ class AgenticOPDEnv(HermesAgentBaseEnv):
                     {"role": "user", "content": self.format_prompt(item)}
                 )
 
-                agent = HermesAgentLoop(
+                agent = RhemifyAgentLoop(
                     server=self.server,
                     tool_schemas=tools,
                     valid_tool_names=valid_names,

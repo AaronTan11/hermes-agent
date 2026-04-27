@@ -15,7 +15,7 @@ from urllib.parse import urlparse
 import requests
 import yaml
 
-from hermes_constants import OPENROUTER_MODELS_URL
+from rhemify_constants import OPENROUTER_MODELS_URL
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 # Only these are stripped — Ollama-style "model:tag" colons (e.g. "qwen3.5:27b")
 # are preserved so the full model name reaches cache lookups and server queries.
 _PROVIDER_PREFIXES: frozenset[str] = frozenset({
-    "openrouter", "nous", "openai-codex", "copilot", "copilot-acp",
+    "openrouter", "unused", "openai-codex", "copilot", "copilot-acp",
     "zai", "kimi-coding", "minimax", "minimax-cn", "anthropic", "deepseek",
     "opencode-zen", "opencode-go", "ai-gateway", "kilocode", "alibaba",
     "custom", "local",
@@ -176,7 +176,7 @@ _URL_TO_PROVIDER: Dict[str, str] = {
     "dashscope-intl.aliyuncs.com": "alibaba",
     "openrouter.ai": "openrouter",
     "generativelanguage.googleapis.com": "google",
-    "inference-api.nousresearch.com": "nous",
+    "inference-api.example.com": "unused",
     "api.deepseek.com": "deepseek",
     "api.githubcopilot.com": "copilot",
     "models.github.ai": "copilot",
@@ -504,8 +504,8 @@ def fetch_endpoint_model_metadata(
 
 def _get_context_cache_path() -> Path:
     """Return path to the persistent context length cache file."""
-    hermes_home = Path(os.environ.get("HERMES_HOME", Path.home() / ".hermes"))
-    return hermes_home / "context_length_cache.yaml"
+    rhemify_home = Path(os.environ.get("RHEMIFY_HOME", Path.home() / ".rhemify"))
+    return rhemify_home / "context_length_cache.yaml"
 
 
 def _load_context_cache() -> Dict[str, int]:
@@ -737,7 +737,7 @@ def _query_anthropic_context_length(model: str, base_url: str, api_key: str) -> 
 
 
 def _resolve_nous_context_length(model: str) -> Optional[int]:
-    """Resolve Nous Portal model context length via OpenRouter metadata.
+    """Resolve Provider model context length via OpenRouter metadata.
 
     Nous model IDs are bare (e.g. 'claude-opus-4-6') while OpenRouter uses
     prefixed IDs (e.g. 'anthropic/claude-opus-4.6'). Try suffix matching
@@ -862,7 +862,7 @@ def get_model_context_length(
             if inferred:
                 effective_provider = inferred
 
-    if effective_provider == "nous":
+    if effective_provider == "unused":
         ctx = _resolve_nous_context_length(model)
         if ctx:
             return ctx
@@ -920,7 +920,7 @@ def estimate_request_tokens_rough(
 ) -> int:
     """Rough token estimate for a full chat-completions request.
 
-    Includes the major payload buckets Hermes sends to providers:
+    Includes the major payload buckets Rhemify sends to providers:
     system prompt, conversation messages, and tool schemas.  With 50+
     tools enabled, schemas alone can add 20-30K tokens — a significant
     blind spot when only counting messages.

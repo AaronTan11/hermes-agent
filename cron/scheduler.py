@@ -4,7 +4,7 @@ Cron job scheduler - executes due jobs.
 Provides tick() which checks for due jobs and runs them. The gateway
 calls this every 60 seconds from a background thread.
 
-Uses a file-based lock (~/.hermes/cron/.tick.lock) so only one tick
+Uses a file-based lock (~/.rhemify/cron/.tick.lock) so only one tick
 runs at a time if multiple processes overlap.
 """
 
@@ -30,13 +30,13 @@ from pathlib import Path
 from typing import Optional
 
 # Add parent directory to path for imports BEFORE repo-level imports.
-# Without this, standalone invocations (e.g. after `hermes update` reloads
-# the module) fail with ModuleNotFoundError for hermes_time et al.
+# Without this, standalone invocations (e.g. after `rhemify update` reloads
+# the module) fail with ModuleNotFoundError for rhemify_time et al.
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from hermes_constants import get_hermes_home
-from hermes_cli.config import load_config
-from hermes_time import now as _hermes_now
+from rhemify_constants import get_rhemify_home
+from rhemify_cli.config import load_config
+from rhemify_time import now as _rhemify_now
 
 logger = logging.getLogger(__name__)
 
@@ -55,11 +55,11 @@ from cron.jobs import get_due_jobs, mark_job_run, save_job_output, advance_next_
 # locally for audit.
 SILENT_MARKER = "[SILENT]"
 
-# Resolve Hermes home directory (respects HERMES_HOME override)
-_hermes_home = get_hermes_home()
+# Resolve Rhemify home directory (respects RHEMIFY_HOME override)
+_rhemify_home = get_rhemify_home()
 
 # File-based lock prevents concurrent ticks from gateway + daemon + systemd timer
-_LOCK_DIR = _hermes_home / "cron"
+_LOCK_DIR = _rhemify_home / "cron"
 _LOCK_FILE = _LOCK_DIR / ".tick.lock"
 
 
@@ -294,18 +294,18 @@ def _run_job_script(script_path: str) -> tuple[bool, str]:
     """Execute a cron job's data-collection script and capture its output.
 
     Args:
-        script_path: Path to a Python script (resolved via HERMES_HOME/scripts/ or absolute).
+        script_path: Path to a Python script (resolved via RHEMIFY_HOME/scripts/ or absolute).
 
     Returns:
         (success, output) — on failure *output* contains the error message so the
         LLM can report the problem to the user.
     """
-    from hermes_constants import get_hermes_home
+    from rhemify_constants import get_rhemify_home
 
     path = Path(script_path).expanduser()
     if not path.is_absolute():
-        # Resolve relative paths against HERMES_HOME/scripts/
-        scripts_dir = get_hermes_home() / "scripts"
+        # Resolve relative paths against RHEMIFY_HOME/scripts/
+        scripts_dir = get_rhemify_home() / "scripts"
         path = (scripts_dir / path).resolve()
         # Guard against path traversal (e.g. "../../etc/passwd")
         try:
@@ -455,7 +455,7 @@ def run_job(job: dict) -> tuple[bool, str, str, Optional[str]]:
     # and discoverable via session_search (same pattern as gateway/run.py).
     _session_db = None
     try:
-        from hermes_state import SessionDB
+        from rhemify_state import SessionDB
         _session_db = SessionDB()
     except Exception as e:
         logger.debug("Job '%s': SQLite session store not available: %s", job.get("id", "?"), e)
@@ -464,41 +464,41 @@ def run_job(job: dict) -> tuple[bool, str, str, Optional[str]]:
     job_name = job["name"]
     prompt = _build_job_prompt(job)
     origin = _resolve_origin(job)
-    _cron_session_id = f"cron_{job_id}_{_hermes_now().strftime('%Y%m%d_%H%M%S')}"
+    _cron_session_id = f"cron_{job_id}_{_rhemify_now().strftime('%Y%m%d_%H%M%S')}"
 
     logger.info("Running job '%s' (ID: %s)", job_name, job_id)
     logger.info("Prompt: %s", prompt[:100])
 
     # Inject origin context so the agent's send_message tool knows the chat
     if origin:
-        os.environ["HERMES_SESSION_PLATFORM"] = origin["platform"]
-        os.environ["HERMES_SESSION_CHAT_ID"] = str(origin["chat_id"])
+        os.environ["RHEMIFY_SESSION_PLATFORM"] = origin["platform"]
+        os.environ["RHEMIFY_SESSION_CHAT_ID"] = str(origin["chat_id"])
         if origin.get("chat_name"):
-            os.environ["HERMES_SESSION_CHAT_NAME"] = origin["chat_name"]
+            os.environ["RHEMIFY_SESSION_CHAT_NAME"] = origin["chat_name"]
 
     try:
         # Re-read .env and config.yaml fresh every run so provider/key
         # changes take effect without a gateway restart.
         from dotenv import load_dotenv
         try:
-            load_dotenv(str(_hermes_home / ".env"), override=True, encoding="utf-8")
+            load_dotenv(str(_rhemify_home / ".env"), override=True, encoding="utf-8")
         except UnicodeDecodeError:
-            load_dotenv(str(_hermes_home / ".env"), override=True, encoding="latin-1")
+            load_dotenv(str(_rhemify_home / ".env"), override=True, encoding="latin-1")
 
         delivery_target = _resolve_delivery_target(job)
         if delivery_target:
-            os.environ["HERMES_CRON_AUTO_DELIVER_PLATFORM"] = delivery_target["platform"]
-            os.environ["HERMES_CRON_AUTO_DELIVER_CHAT_ID"] = str(delivery_target["chat_id"])
+            os.environ["RHEMIFY_CRON_AUTO_DELIVER_PLATFORM"] = delivery_target["platform"]
+            os.environ["RHEMIFY_CRON_AUTO_DELIVER_CHAT_ID"] = str(delivery_target["chat_id"])
             if delivery_target.get("thread_id") is not None:
-                os.environ["HERMES_CRON_AUTO_DELIVER_THREAD_ID"] = str(delivery_target["thread_id"])
+                os.environ["RHEMIFY_CRON_AUTO_DELIVER_THREAD_ID"] = str(delivery_target["thread_id"])
 
-        model = job.get("model") or os.getenv("HERMES_MODEL") or ""
+        model = job.get("model") or os.getenv("RHEMIFY_MODEL") or ""
 
         # Load config.yaml for model, reasoning, prefill, toolsets, provider routing
         _cfg = {}
         try:
             import yaml
-            _cfg_path = str(_hermes_home / "config.yaml")
+            _cfg_path = str(_rhemify_home / "config.yaml")
             if os.path.exists(_cfg_path):
                 with open(_cfg_path) as _f:
                     _cfg = yaml.safe_load(_f) or {}
@@ -512,20 +512,20 @@ def run_job(job: dict) -> tuple[bool, str, str, Optional[str]]:
             logger.warning("Job '%s': failed to load config.yaml, using defaults: %s", job_id, e)
 
         # Reasoning config from env or config.yaml
-        from hermes_constants import parse_reasoning_effort
-        effort = os.getenv("HERMES_REASONING_EFFORT", "")
+        from rhemify_constants import parse_reasoning_effort
+        effort = os.getenv("RHEMIFY_REASONING_EFFORT", "")
         if not effort:
             effort = str(_cfg.get("agent", {}).get("reasoning_effort", "")).strip()
         reasoning_config = parse_reasoning_effort(effort)
 
         # Prefill messages from env or config.yaml
         prefill_messages = None
-        prefill_file = os.getenv("HERMES_PREFILL_MESSAGES_FILE", "") or _cfg.get("prefill_messages_file", "")
+        prefill_file = os.getenv("RHEMIFY_PREFILL_MESSAGES_FILE", "") or _cfg.get("prefill_messages_file", "")
         if prefill_file:
             import json as _json
             pfpath = Path(prefill_file).expanduser()
             if not pfpath.is_absolute():
-                pfpath = _hermes_home / pfpath
+                pfpath = _rhemify_home / pfpath
             if pfpath.exists():
                 try:
                     with open(pfpath, "r", encoding="utf-8") as _pf:
@@ -543,13 +543,13 @@ def run_job(job: dict) -> tuple[bool, str, str, Optional[str]]:
         pr = _cfg.get("provider_routing", {})
         smart_routing = _cfg.get("smart_model_routing", {}) or {}
 
-        from hermes_cli.runtime_provider import (
+        from rhemify_cli.runtime_provider import (
             resolve_runtime_provider,
             format_runtime_provider_error,
         )
         try:
             runtime_kwargs = {
-                "requested": job.get("provider") or os.getenv("HERMES_INFERENCE_PROVIDER"),
+                "requested": job.get("provider") or os.getenv("RHEMIFY_INFERENCE_PROVIDER"),
             }
             if job.get("base_url"):
                 runtime_kwargs["explicit_base_url"] = job.get("base_url")
@@ -574,7 +574,7 @@ def run_job(job: dict) -> tuple[bool, str, str, Optional[str]]:
         )
 
         # ── Agent SDK backend (optional) ──────────────────────────────
-        _use_sdk = os.getenv("HERMES_AGENT_SDK", "").lower() in ("1", "true", "yes")
+        _use_sdk = os.getenv("RHEMIFY_AGENT_SDK", "").lower() in ("1", "true", "yes")
         if not _use_sdk:
             try:
                 _use_sdk = user_cfg.get("agent_sdk", {}).get("enabled", False)
@@ -603,7 +603,7 @@ def run_job(job: dict) -> tuple[bool, str, str, Optional[str]]:
 
 {final_response}"""
             # Save output
-            outputs_dir = Path(hermes_home) / "cron" / "outputs"
+            outputs_dir = Path(rhemify_home) / "cron" / "outputs"
             outputs_dir.mkdir(parents=True, exist_ok=True)
             output_path = outputs_dir / f"{job.get('id', 'unknown')}.md"
             output_path.write_text(output, encoding="utf-8")
@@ -637,11 +637,11 @@ def run_job(job: dict) -> tuple[bool, str, str, Optional[str]]:
         # for hours if it's actively calling tools / receiving stream tokens,
         # but a hung API call or stuck tool with no activity for the configured
         # duration is caught and killed.  Default 600s (10 min inactivity);
-        # override via HERMES_CRON_TIMEOUT env var.  0 = unlimited.
+        # override via RHEMIFY_CRON_TIMEOUT env var.  0 = unlimited.
         #
         # Uses the agent's built-in activity tracker (updated by
         # _touch_activity() on every tool call, API call, and stream delta).
-        _cron_timeout = float(os.getenv("HERMES_CRON_TIMEOUT", 600))
+        _cron_timeout = float(os.getenv("RHEMIFY_CRON_TIMEOUT", 600))
         _cron_inactivity_limit = _cron_timeout if _cron_timeout > 0 else None
         _POLL_INTERVAL = 5.0
         _cron_pool = concurrent.futures.ThreadPoolExecutor(max_workers=1)
@@ -714,7 +714,7 @@ def run_job(job: dict) -> tuple[bool, str, str, Optional[str]]:
         output = f"""# Cron Job: {job_name}
 
 **Job ID:** {job_id}
-**Run Time:** {_hermes_now().strftime('%Y-%m-%d %H:%M:%S')}
+**Run Time:** {_rhemify_now().strftime('%Y-%m-%d %H:%M:%S')}
 **Schedule:** {job.get('schedule_display', 'N/A')}
 
 ## Prompt
@@ -736,7 +736,7 @@ def run_job(job: dict) -> tuple[bool, str, str, Optional[str]]:
         output = f"""# Cron Job: {job_name} (FAILED)
 
 **Job ID:** {job_id}
-**Run Time:** {_hermes_now().strftime('%Y-%m-%d %H:%M:%S')}
+**Run Time:** {_rhemify_now().strftime('%Y-%m-%d %H:%M:%S')}
 **Schedule:** {job.get('schedule_display', 'N/A')}
 
 ## Prompt
@@ -754,12 +754,12 @@ def run_job(job: dict) -> tuple[bool, str, str, Optional[str]]:
     finally:
         # Clean up injected env vars so they don't leak to other jobs
         for key in (
-            "HERMES_SESSION_PLATFORM",
-            "HERMES_SESSION_CHAT_ID",
-            "HERMES_SESSION_CHAT_NAME",
-            "HERMES_CRON_AUTO_DELIVER_PLATFORM",
-            "HERMES_CRON_AUTO_DELIVER_CHAT_ID",
-            "HERMES_CRON_AUTO_DELIVER_THREAD_ID",
+            "RHEMIFY_SESSION_PLATFORM",
+            "RHEMIFY_SESSION_CHAT_ID",
+            "RHEMIFY_SESSION_CHAT_NAME",
+            "RHEMIFY_CRON_AUTO_DELIVER_PLATFORM",
+            "RHEMIFY_CRON_AUTO_DELIVER_CHAT_ID",
+            "RHEMIFY_CRON_AUTO_DELIVER_THREAD_ID",
         ):
             os.environ.pop(key, None)
         if _session_db:
@@ -808,11 +808,11 @@ def tick(verbose: bool = True, adapters=None, loop=None) -> int:
         due_jobs = get_due_jobs()
 
         if verbose and not due_jobs:
-            logger.info("%s - No jobs due", _hermes_now().strftime('%H:%M:%S'))
+            logger.info("%s - No jobs due", _rhemify_now().strftime('%H:%M:%S'))
             return 0
 
         if verbose:
-            logger.info("%s - %s job(s) due", _hermes_now().strftime('%H:%M:%S'), len(due_jobs))
+            logger.info("%s - %s job(s) due", _rhemify_now().strftime('%H:%M:%S'), len(due_jobs))
 
         executed = 0
         for job in due_jobs:

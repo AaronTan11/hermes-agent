@@ -21,7 +21,7 @@ class TestHonchoSession:
         return HonchoSession(
             key="telegram:12345",
             user_peer_id="user-telegram-12345",
-            assistant_peer_id="hermes-assistant",
+            assistant_peer_id="rhemify-assistant",
             honcho_session_id="telegram-12345",
         )
 
@@ -197,7 +197,7 @@ class TestPeerLookupHelpers:
         session = HonchoSession(
             key="telegram:123",
             user_peer_id="robert",
-            assistant_peer_id="hermes",
+            assistant_peer_id="rhemify",
             honcho_session_id="telegram-123",
         )
         mgr._cache[session.key] = session

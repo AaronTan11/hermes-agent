@@ -61,7 +61,7 @@ def get_tool_preview_max_len() -> int:
 def _get_skin():
     """Get the active skin config, or None if not available."""
     try:
-        from hermes_cli.skin_engine import get_active_skin
+        from rhemify_cli.skin_engine import get_active_skin
         return get_active_skin()
     except Exception:
         return None
@@ -411,7 +411,7 @@ def _emit_inline_diff(diff_text: str, print_fn) -> bool:
 
 
 def _render_inline_unified_diff(diff: str) -> list[str]:
-    """Render unified diff lines in Hermes' inline transcript style."""
+    """Render unified diff lines in Rhemify' inline transcript style."""
     rendered: list[str] = []
     from_file = None
     to_file = None
@@ -651,7 +651,7 @@ class KawaiiSpinner:
         wings = skin.get_spinner_wings() if skin else []
 
         while self.running:
-            if os.getenv("HERMES_SPINNER_PAUSE"):
+            if os.getenv("RHEMIFY_SPINNER_PAUSE"):
                 time.sleep(0.1)
                 continue
             frame = self.spinner_frames[self.frame_idx % len(self.spinner_frames)]
