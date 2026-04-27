@@ -6383,7 +6383,7 @@ class GatewayRunner:
             _early_use_sdk = os.getenv("RHEMIFY_AGENT_SDK", "").lower() in ("1", "true", "yes")
             if not _early_use_sdk:
                 try:
-                    _early_use_sdk = (self._config or {}).get("agent_sdk", {}).get("enabled", False)
+                    _early_use_sdk = (user_config or {}).get("agent_sdk", {}).get("enabled", False)
                 except Exception:
                     pass
 
@@ -6658,14 +6658,14 @@ class GatewayRunner:
                 _use_sdk = os.getenv("RHEMIFY_AGENT_SDK", "").lower() in ("1", "true", "yes")
                 if not _use_sdk:
                     try:
-                        _use_sdk = (self._config or {}).get("agent_sdk", {}).get("enabled", False)
+                        _use_sdk = (user_config or {}).get("agent_sdk", {}).get("enabled", False)
                     except Exception:
                         pass
 
                 if _use_sdk:
                     import asyncio as _aio
                     from agent.sdk_adapter import SDKAgentRunner
-                    _sdk_cfg = (self._config or {}).get("agent_sdk", {})
+                    _sdk_cfg = (user_config or {}).get("agent_sdk", {})
 
                     # Lazily create / reuse an SDK runner per gateway session
                     _sdk_cache = getattr(self, '_sdk_runner_cache', None)
