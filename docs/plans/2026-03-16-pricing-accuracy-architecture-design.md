@@ -89,7 +89,7 @@ Rules:
 - `output_tokens` excludes cache metrics.
 - `reasoning_tokens` is telemetry unless a provider officially bills it separately.
 
-This is the same normalization pattern used by `opencode`, extended with provenance and reconciliation ids.
+This is the same normalization pattern used by `upstream`, extended with provenance and reconciliation ids.
 
 ## Provider Normalization Rules
 

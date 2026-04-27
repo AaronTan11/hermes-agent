@@ -1,0 +1,4 @@
+[console_scripts]
+rhemify = rhemify_cli.main:main
+rhemify-acp = acp_adapter.entry:main
+rhemify = run_agent:main

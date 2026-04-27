@@ -159,7 +159,7 @@ _PROVIDER_MODELS: dict[str, list[str]] = {
         "deepseek-chat",
         "deepseek-reasoner",
     ],
-    "opencode-zen": [
+    "upstream-zen": [
         "gpt-5.4-pro",
         "gpt-5.4",
         "gpt-5.3-codex",
@@ -197,7 +197,7 @@ _PROVIDER_MODELS: dict[str, list[str]] = {
         "qwen3-coder",
         "big-pickle",
     ],
-    "opencode-go": [
+    "upstream-go": [
         "glm-5",
         "kimi-k2.5",
         "mimo-v2-pro",
@@ -266,8 +266,8 @@ _PROVIDER_LABELS = {
     "minimax-cn": "MiniMax (China)",
     "anthropic": "Anthropic",
     "deepseek": "DeepSeek",
-    "opencode-zen": "upstream Zen",
-    "opencode-go": "upstream Go",
+    "upstream-zen": "upstream Zen",
+    "upstream-go": "upstream Go",
     "ai-gateway": "AI Gateway",
     "kilocode": "Kilo Code",
     "alibaba": "Alibaba Cloud (DashScope)",
@@ -293,10 +293,10 @@ _PROVIDER_ALIASES = {
     "claude": "anthropic",
     "claude-code": "anthropic",
     "deep-seek": "deepseek",
-    "opencode": "opencode-zen",
-    "zen": "opencode-zen",
-    "go": "opencode-go",
-    "opencode-go-sub": "opencode-go",
+    "upstream": "upstream-zen",
+    "zen": "upstream-zen",
+    "go": "upstream-go",
+    "upstream-go-sub": "upstream-go",
     "aigateway": "ai-gateway",
     "vercel": "ai-gateway",
     "vercel-ai-gateway": "ai-gateway",
@@ -551,7 +551,7 @@ def list_available_providers() -> list[dict[str, str]]:
     _PROVIDER_ORDER = [
         "openrouter", "unused", "openai-codex", "copilot", "copilot-acp",
         "huggingface", "zai", "kimi-coding", "minimax", "minimax-cn", "kilocode", "anthropic", "alibaba",
-        "opencode-zen", "opencode-go",
+        "upstream-zen", "upstream-go",
         "ai-gateway", "deepseek", "custom",
     ]
     # Build reverse alias map
@@ -926,7 +926,7 @@ def _extract_model_ids(payload: Any) -> list[str]:
 def copilot_default_headers() -> dict[str, str]:
     """Standard headers for Copilot API requests.
 
-    Includes Openai-Intent and x-initiator headers that opencode and the
+    Includes Openai-Intent and x-initiator headers that upstream and the
     Copilot CLI send on every request.
     """
     try:
@@ -1112,7 +1112,7 @@ def _github_reasoning_efforts_for_model_id(model_id: str) -> list[str]:
 def _should_use_copilot_responses_api(model_id: str) -> bool:
     """Decide whether a Copilot model should use the Responses API.
 
-    Replicates opencode's ``shouldUseCopilotResponsesApi`` logic:
+    Replicates upstream's ``shouldUseCopilotResponsesApi`` logic:
     GPT-5+ models use Responses API, except ``gpt-5-mini`` which uses
     Chat Completions.  All non-GPT models (Claude, Gemini, etc.) use
     Chat Completions.
@@ -1134,7 +1134,7 @@ def copilot_model_api_mode(
 ) -> str:
     """Determine the API mode for a Copilot model.
 
-    Uses the model ID pattern (matching opencode's approach) as the
+    Uses the model ID pattern (matching upstream's approach) as the
     primary signal.  Falls back to the catalog's ``supported_endpoints``
     only for models not covered by the pattern check.
     """
@@ -1142,7 +1142,7 @@ def copilot_model_api_mode(
     if not normalized:
         return "chat_completions"
 
-    # Primary: model ID pattern (matches opencode's shouldUseCopilotResponsesApi)
+    # Primary: model ID pattern (matches upstream's shouldUseCopilotResponsesApi)
     if _should_use_copilot_responses_api(normalized):
         return "codex_responses"
 
@@ -1165,11 +1165,11 @@ def copilot_model_api_mode(
     return "chat_completions"
 
 
-def normalize_opencode_model_id(provider_id: Optional[str], model_id: Optional[str]) -> str:
+def normalize_upstream_model_id(provider_id: Optional[str], model_id: Optional[str]) -> str:
     """Normalize upstream config IDs to the bare model slug used in API requests."""
     provider = normalize_provider(provider_id)
     current = str(model_id or "").strip()
-    if not current or provider not in {"opencode-zen", "opencode-go"}:
+    if not current or provider not in {"upstream-zen", "upstream-go"}:
         return current
 
     prefix = f"{provider}/"
@@ -1178,7 +1178,7 @@ def normalize_opencode_model_id(provider_id: Optional[str], model_id: Optional[s
     return current
 
 
-def opencode_model_api_mode(provider_id: Optional[str], model_id: Optional[str]) -> str:
+def upstream_model_api_mode(provider_id: Optional[str], model_id: Optional[str]) -> str:
     """Determine the API mode for an upstream Zen / Go model.
 
     upstream routes different models behind different API surfaces:
@@ -1193,16 +1193,16 @@ def opencode_model_api_mode(provider_id: Optional[str], model_id: Optional[str])
     This follows the published upstream docs for Zen and Go endpoints.
     """
     provider = normalize_provider(provider_id)
-    normalized = normalize_opencode_model_id(provider_id, model_id).lower()
+    normalized = normalize_upstream_model_id(provider_id, model_id).lower()
     if not normalized:
         return "chat_completions"
 
-    if provider == "opencode-go":
+    if provider == "upstream-go":
         if normalized.startswith("minimax-"):
             return "anthropic_messages"
         return "chat_completions"
 
-    if provider == "opencode-zen":
+    if provider == "upstream-zen":
         if normalized.startswith("claude-"):
             return "anthropic_messages"
         if normalized.startswith("gpt-"):

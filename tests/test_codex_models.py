@@ -186,18 +186,18 @@ class TestNormalizeModelForProvider:
         assert changed is True
         assert cli.model == "claude-opus-4.6"
 
-    def test_opencode_go_prefix_stripped(self):
-        cli = _make_cli(model="opencode-go/kimi-k2.5")
+    def test_upstream_go_prefix_stripped(self):
+        cli = _make_cli(model="upstream-go/kimi-k2.5")
         cli.api_mode = "chat_completions"
-        changed = cli._normalize_model_for_provider("opencode-go")
+        changed = cli._normalize_model_for_provider("upstream-go")
         assert changed is True
         assert cli.model == "kimi-k2.5"
         assert cli.api_mode == "chat_completions"
 
-    def test_opencode_zen_claude_sets_messages_mode(self):
-        cli = _make_cli(model="opencode-zen/claude-sonnet-4-6")
+    def test_upstream_zen_claude_sets_messages_mode(self):
+        cli = _make_cli(model="upstream-zen/claude-sonnet-4-6")
         cli.api_mode = "chat_completions"
-        changed = cli._normalize_model_for_provider("opencode-zen")
+        changed = cli._normalize_model_for_provider("upstream-zen")
         assert changed is True
         assert cli.model == "claude-sonnet-4-6"
         assert cli.api_mode == "anthropic_messages"

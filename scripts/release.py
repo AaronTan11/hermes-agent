@@ -98,7 +98,7 @@ AUTHOR_MAP = {
     "johnsonblake1@gmail.com": "blakejohnson",
     "bryan@intertwinesys.com": "bryanyoung",
     "christo.mitov@gmail.com": "christomitov",
-    "rhemify@example.com": "NousResearch",
+    "rhemify@example.com": "AaronTan11",
     "upstream@sparklab.ai": "upstream",
     "semihcvlk53@gmail.com": "Himess",
     "erenkar950@gmail.com": "erenkarakus",
@@ -363,7 +363,7 @@ def get_pr_number(subject: str) -> str:
     return None
 
 
-def generate_changelog(commits, tag_name, semver, repo_url="https://github.com/NousResearch/rhemify",
+def generate_changelog(commits, tag_name, semver, repo_url="https://github.com/AaronTan11/rhemify",
                        prev_tag=None, first_release=False):
     """Generate markdown changelog from categorized commits."""
     lines = []

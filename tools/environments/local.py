@@ -22,7 +22,7 @@ _OUTPUT_FENCE = "__RHEMIFY_FENCE_a9f7b3__"
 # Rhemify-internal env vars that should NOT leak into terminal subprocesses.
 # These are loaded from ~/.rhemify/.env for Rhemify' own LLM/provider calls
 # but can break external CLIs (e.g. codex) that also honor them.
-# See: https://github.com/NousResearch/rhemify/issues/1002
+# See: https://github.com/AaronTan11/rhemify/issues/1002
 #
 # Built dynamically from the provider registry so new providers are
 # automatically covered without manual blocklist maintenance.

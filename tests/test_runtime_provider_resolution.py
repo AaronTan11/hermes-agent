@@ -649,7 +649,7 @@ def test_model_config_api_mode_ignored_when_provider_differs(monkeypatch):
         rp,
         "_get_model_config",
         lambda: {
-            "provider": "opencode-go",
+            "provider": "upstream-go",
             "default": "minimax-m2.5",
             "api_mode": "anthropic_messages",
         },
@@ -836,78 +836,78 @@ def test_alibaba_anthropic_endpoint_override_uses_anthropic_messages(monkeypatch
     assert resolved["base_url"] == "https://coding-intl.dashscope.aliyuncs.com/apps/anthropic"
 
 
-def test_opencode_zen_gpt_defaults_to_responses(monkeypatch):
-    monkeypatch.setattr(rp, "resolve_provider", lambda *a, **k: "opencode-zen")
+def test_upstream_zen_gpt_defaults_to_responses(monkeypatch):
+    monkeypatch.setattr(rp, "resolve_provider", lambda *a, **k: "upstream-zen")
     monkeypatch.setattr(rp, "_get_model_config", lambda: {"default": "gpt-5.4"})
-    monkeypatch.setenv("OPENCODE_ZEN_API_KEY", "test-opencode-zen-key")
-    monkeypatch.delenv("OPENCODE_ZEN_BASE_URL", raising=False)
+    monkeypatch.setenv("UPSTREAM_ZEN_API_KEY", "test-upstream-zen-key")
+    monkeypatch.delenv("UPSTREAM_ZEN_BASE_URL", raising=False)
 
-    resolved = rp.resolve_runtime_provider(requested="opencode-zen")
+    resolved = rp.resolve_runtime_provider(requested="upstream-zen")
 
-    assert resolved["provider"] == "opencode-zen"
+    assert resolved["provider"] == "upstream-zen"
     assert resolved["api_mode"] == "codex_responses"
-    assert resolved["base_url"] == "https://opencode.ai/zen/v1"
+    assert resolved["base_url"] == "https://upstream.ai/zen/v1"
 
 
-def test_opencode_zen_claude_defaults_to_messages(monkeypatch):
-    monkeypatch.setattr(rp, "resolve_provider", lambda *a, **k: "opencode-zen")
+def test_upstream_zen_claude_defaults_to_messages(monkeypatch):
+    monkeypatch.setattr(rp, "resolve_provider", lambda *a, **k: "upstream-zen")
     monkeypatch.setattr(rp, "_get_model_config", lambda: {"default": "claude-sonnet-4-6"})
-    monkeypatch.setenv("OPENCODE_ZEN_API_KEY", "test-opencode-zen-key")
-    monkeypatch.delenv("OPENCODE_ZEN_BASE_URL", raising=False)
+    monkeypatch.setenv("UPSTREAM_ZEN_API_KEY", "test-upstream-zen-key")
+    monkeypatch.delenv("UPSTREAM_ZEN_BASE_URL", raising=False)
 
-    resolved = rp.resolve_runtime_provider(requested="opencode-zen")
+    resolved = rp.resolve_runtime_provider(requested="upstream-zen")
 
-    assert resolved["provider"] == "opencode-zen"
+    assert resolved["provider"] == "upstream-zen"
     assert resolved["api_mode"] == "anthropic_messages"
     # Trailing /v1 stripped for anthropic_messages mode — the Anthropic SDK
     # appends its own /v1/messages to the base_url.
-    assert resolved["base_url"] == "https://opencode.ai/zen"
+    assert resolved["base_url"] == "https://upstream.ai/zen"
 
 
-def test_opencode_go_minimax_defaults_to_messages(monkeypatch):
-    monkeypatch.setattr(rp, "resolve_provider", lambda *a, **k: "opencode-go")
+def test_upstream_go_minimax_defaults_to_messages(monkeypatch):
+    monkeypatch.setattr(rp, "resolve_provider", lambda *a, **k: "upstream-go")
     monkeypatch.setattr(rp, "_get_model_config", lambda: {"default": "minimax-m2.5"})
-    monkeypatch.setenv("OPENCODE_GO_API_KEY", "test-opencode-go-key")
-    monkeypatch.delenv("OPENCODE_GO_BASE_URL", raising=False)
+    monkeypatch.setenv("UPSTREAM_GO_API_KEY", "test-upstream-go-key")
+    monkeypatch.delenv("UPSTREAM_GO_BASE_URL", raising=False)
 
-    resolved = rp.resolve_runtime_provider(requested="opencode-go")
+    resolved = rp.resolve_runtime_provider(requested="upstream-go")
 
-    assert resolved["provider"] == "opencode-go"
+    assert resolved["provider"] == "upstream-go"
     assert resolved["api_mode"] == "anthropic_messages"
     # Trailing /v1 stripped — Anthropic SDK appends /v1/messages itself.
-    assert resolved["base_url"] == "https://opencode.ai/zen/go"
+    assert resolved["base_url"] == "https://upstream.ai/zen/go"
 
 
-def test_opencode_go_glm_defaults_to_chat_completions(monkeypatch):
-    monkeypatch.setattr(rp, "resolve_provider", lambda *a, **k: "opencode-go")
+def test_upstream_go_glm_defaults_to_chat_completions(monkeypatch):
+    monkeypatch.setattr(rp, "resolve_provider", lambda *a, **k: "upstream-go")
     monkeypatch.setattr(rp, "_get_model_config", lambda: {"default": "glm-5"})
-    monkeypatch.setenv("OPENCODE_GO_API_KEY", "test-opencode-go-key")
-    monkeypatch.delenv("OPENCODE_GO_BASE_URL", raising=False)
+    monkeypatch.setenv("UPSTREAM_GO_API_KEY", "test-upstream-go-key")
+    monkeypatch.delenv("UPSTREAM_GO_BASE_URL", raising=False)
 
-    resolved = rp.resolve_runtime_provider(requested="opencode-go")
+    resolved = rp.resolve_runtime_provider(requested="upstream-go")
 
-    assert resolved["provider"] == "opencode-go"
+    assert resolved["provider"] == "upstream-go"
     assert resolved["api_mode"] == "chat_completions"
-    assert resolved["base_url"] == "https://opencode.ai/zen/go/v1"
+    assert resolved["base_url"] == "https://upstream.ai/zen/go/v1"
 
 
-def test_opencode_go_configured_api_mode_still_overrides_default(monkeypatch):
-    monkeypatch.setattr(rp, "resolve_provider", lambda *a, **k: "opencode-go")
+def test_upstream_go_configured_api_mode_still_overrides_default(monkeypatch):
+    monkeypatch.setattr(rp, "resolve_provider", lambda *a, **k: "upstream-go")
     monkeypatch.setattr(
         rp,
         "_get_model_config",
         lambda: {
-            "provider": "opencode-go",
+            "provider": "upstream-go",
             "default": "minimax-m2.5",
             "api_mode": "chat_completions",
         },
     )
-    monkeypatch.setenv("OPENCODE_GO_API_KEY", "test-opencode-go-key")
-    monkeypatch.delenv("OPENCODE_GO_BASE_URL", raising=False)
+    monkeypatch.setenv("UPSTREAM_GO_API_KEY", "test-upstream-go-key")
+    monkeypatch.delenv("UPSTREAM_GO_BASE_URL", raising=False)
 
-    resolved = rp.resolve_runtime_provider(requested="opencode-go")
+    resolved = rp.resolve_runtime_provider(requested="upstream-go")
 
-    assert resolved["provider"] == "opencode-go"
+    assert resolved["provider"] == "upstream-go"
     assert resolved["api_mode"] == "chat_completions"
 
 

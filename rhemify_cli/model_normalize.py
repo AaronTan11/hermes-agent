@@ -65,8 +65,8 @@ _AGGREGATOR_PROVIDERS: frozenset[str] = frozenset({
 # Providers that want bare names with dots replaced by hyphens.
 _DOT_TO_HYPHEN_PROVIDERS: frozenset[str] = frozenset({
     "anthropic",
-    "opencode-zen",
-    "opencode-go",
+    "upstream-zen",
+    "upstream-go",
 })
 
 # Providers that want bare names with dots preserved.
@@ -283,7 +283,7 @@ def normalize_model_for_provider(model_input: str, target_provider: str) -> str:
         >>> normalize_model_for_provider("openai/gpt-5.4", "copilot")
         'gpt-5.4'
 
-        >>> normalize_model_for_provider("claude-sonnet-4.6", "opencode-zen")
+        >>> normalize_model_for_provider("claude-sonnet-4.6", "upstream-zen")
         'claude-sonnet-4-6'
 
         >>> normalize_model_for_provider("deepseek-v3", "deepseek")

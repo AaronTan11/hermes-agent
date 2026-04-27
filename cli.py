@@ -1653,11 +1653,11 @@ class RhemifyCLI:
                 pass
             return changed
 
-        if resolved_provider in {"opencode-zen", "opencode-go"}:
+        if resolved_provider in {"upstream-zen", "upstream-go"}:
             try:
-                from rhemify_cli.models import normalize_opencode_model_id, opencode_model_api_mode
+                from rhemify_cli.models import normalize_upstream_model_id, upstream_model_api_mode
 
-                canonical = normalize_opencode_model_id(resolved_provider, current_model)
+                canonical = normalize_upstream_model_id(resolved_provider, current_model)
                 if canonical and canonical != current_model:
                     if not self._model_is_default:
                         self.console.print(
@@ -1667,7 +1667,7 @@ class RhemifyCLI:
                     current_model = canonical
                     changed = True
 
-                resolved_mode = opencode_model_api_mode(resolved_provider, current_model)
+                resolved_mode = upstream_model_api_mode(resolved_provider, current_model)
                 if resolved_mode != self.api_mode:
                     self.api_mode = resolved_mode
                     changed = True

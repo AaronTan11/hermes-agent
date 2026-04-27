@@ -925,8 +925,8 @@ def select_provider_and_model(args=None):
         "kimi-coding": "Kimi / Moonshot",
         "minimax": "MiniMax",
         "minimax-cn": "MiniMax (China)",
-        "opencode-zen": "upstream Zen",
-        "opencode-go": "upstream Go",
+        "upstream-zen": "upstream Zen",
+        "upstream-go": "upstream Go",
         "ai-gateway": "AI Gateway",
         "kilocode": "Kilo Code",
         "alibaba": "Alibaba Cloud (DashScope)",
@@ -953,8 +953,8 @@ def select_provider_and_model(args=None):
         ("minimax", "MiniMax (global direct API)"),
         ("minimax-cn", "MiniMax China (domestic direct API)"),
         ("kilocode", "Kilo Code (Kilo Gateway API)"),
-        ("opencode-zen", "upstream Zen (35+ curated models, pay-as-you-go)"),
-        ("opencode-go", "upstream Go (open models, $10/month subscription)"),
+        ("upstream-zen", "upstream Zen (35+ curated models, pay-as-you-go)"),
+        ("upstream-go", "upstream Go (open models, $10/month subscription)"),
         ("ai-gateway", "AI Gateway (Vercel — 200+ models, pay-per-use)"),
         ("alibaba", "Alibaba Cloud / DashScope Coding (Qwen + multi-provider)"),
         ("huggingface", "Hugging Face Inference Providers (20+ open models)"),
@@ -1030,7 +1030,7 @@ def select_provider_and_model(args=None):
         _model_flow_anthropic(config, current_model)
     elif selected_provider == "kimi-coding":
         _model_flow_kimi(config, current_model)
-    elif selected_provider in ("zai", "minimax", "minimax-cn", "kilocode", "opencode-zen", "opencode-go", "ai-gateway", "alibaba", "huggingface"):
+    elif selected_provider in ("zai", "minimax", "minimax-cn", "kilocode", "upstream-zen", "upstream-go", "ai-gateway", "alibaba", "huggingface"):
         _model_flow_api_key_provider(config, selected_provider, current_model)
 
 
@@ -2134,7 +2134,7 @@ def _model_flow_api_key_provider(config, provider_id, current_model=""):
         deactivate_provider,
     )
     from rhemify_cli.config import get_env_value, save_env_value, load_config, save_config
-    from rhemify_cli.models import fetch_api_models, opencode_model_api_mode, normalize_opencode_model_id
+    from rhemify_cli.models import fetch_api_models, upstream_model_api_mode, normalize_upstream_model_id
 
     pconfig = PROVIDER_REGISTRY[provider_id]
     key_env = pconfig.api_key_env_vars[0] if pconfig.api_key_env_vars else ""
@@ -2200,9 +2200,9 @@ def _model_flow_api_key_provider(config, provider_id, current_model=""):
             print(f"  Showing {len(model_list)} curated models — use \"Enter custom model name\" for others.")
         # else: no defaults either, will fall through to raw input
 
-    if provider_id in {"opencode-zen", "opencode-go"}:
-        model_list = [normalize_opencode_model_id(provider_id, mid) for mid in model_list]
-        current_model = normalize_opencode_model_id(provider_id, current_model)
+    if provider_id in {"upstream-zen", "upstream-go"}:
+        model_list = [normalize_upstream_model_id(provider_id, mid) for mid in model_list]
+        current_model = normalize_upstream_model_id(provider_id, current_model)
         model_list = list(dict.fromkeys(mid for mid in model_list if mid))
 
     if model_list:
@@ -2214,8 +2214,8 @@ def _model_flow_api_key_provider(config, provider_id, current_model=""):
             selected = None
 
     if selected:
-        if provider_id in {"opencode-zen", "opencode-go"}:
-            selected = normalize_opencode_model_id(provider_id, selected)
+        if provider_id in {"upstream-zen", "upstream-go"}:
+            selected = normalize_upstream_model_id(provider_id, selected)
 
         _save_model_choice(selected)
 
@@ -2227,8 +2227,8 @@ def _model_flow_api_key_provider(config, provider_id, current_model=""):
             cfg["model"] = model
         model["provider"] = provider_id
         model["base_url"] = effective_base
-        if provider_id in {"opencode-zen", "opencode-go"}:
-            model["api_mode"] = opencode_model_api_mode(provider_id, selected)
+        if provider_id in {"upstream-zen", "upstream-go"}:
+            model["api_mode"] = upstream_model_api_mode(provider_id, selected)
         else:
             model.pop("api_mode", None)
         save_config(cfg)
@@ -2630,7 +2630,7 @@ def _update_via_zip(args):
     from urllib.request import urlretrieve
     
     branch = "main"
-    zip_url = f"https://github.com/NousResearch/rhemify/archive/refs/heads/{branch}.zip"
+    zip_url = f"https://github.com/AaronTan11/rhemify/archive/refs/heads/{branch}.zip"
     
     print("→ Downloading latest version...")
     try:
@@ -2922,12 +2922,12 @@ def _restore_stashed_changes(
 # =========================================================================
 
 OFFICIAL_REPO_URLS = {
-    "https://github.com/NousResearch/rhemify.git",
-    "git@github.com:NousResearch/rhemify.git",
-    "https://github.com/NousResearch/rhemify",
-    "git@github.com:NousResearch/rhemify",
+    "https://github.com/AaronTan11/rhemify.git",
+    "git@github.com:AaronTan11/rhemify.git",
+    "https://github.com/AaronTan11/rhemify",
+    "git@github.com:AaronTan11/rhemify",
 }
-OFFICIAL_REPO_URL = "https://github.com/NousResearch/rhemify.git"
+OFFICIAL_REPO_URL = "https://github.com/AaronTan11/rhemify.git"
 SKIP_UPSTREAM_PROMPT_FILE = ".skip_upstream_prompt"
 
 
@@ -3059,7 +3059,7 @@ def _sync_with_upstream_if_needed(git_cmd: list[str], cwd: Path) -> None:
         # Ask user if they want to add upstream
         print()
         print("ℹ Your fork is not tracking the official Rhemify repository.")
-        print("  This means you may miss updates from NousResearch/rhemify.")
+        print("  This means you may miss updates from AaronTan11/rhemify.")
         print()
         try:
             response = input("Add official repo as 'upstream' remote? [Y/n]: ").strip().lower()
@@ -3070,13 +3070,13 @@ def _sync_with_upstream_if_needed(git_cmd: list[str], cwd: Path) -> None:
         if response in ("", "y", "yes"):
             print("→ Adding upstream remote...")
             if _add_upstream_remote(git_cmd, cwd):
-                print("  ✓ Added upstream: https://github.com/NousResearch/rhemify.git")
+                print("  ✓ Added upstream: https://github.com/AaronTan11/rhemify.git")
                 has_upstream = True
             else:
                 print("  ✗ Failed to add upstream remote. Skipping upstream sync.")
                 return
         else:
-            print("  Skipped. Run 'git remote add upstream https://github.com/NousResearch/rhemify.git' to add later.")
+            print("  Skipped. Run 'git remote add upstream https://github.com/AaronTan11/rhemify.git' to add later.")
             _mark_skip_upstream_prompt()
             return
 
@@ -3271,7 +3271,7 @@ def cmd_update(args):
             use_zip_update = True
         else:
             print("✗ Not a git repository. Please reinstall:")
-            print("  curl -fsSL https://raw.githubusercontent.com/NousResearch/rhemify/main/scripts/install.sh | bash")
+            print("  curl -fsSL https://raw.githubusercontent.com/AaronTan11/rhemify/main/scripts/install.sh | bash")
             sys.exit(1)
     
     # On Windows, git can fail with "unable to write loose object file: Invalid argument"

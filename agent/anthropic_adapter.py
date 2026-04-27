@@ -252,7 +252,7 @@ def build_anthropic_client(api_key: str, base_url: str = None):
 def read_claude_code_credentials() -> Optional[Dict[str, Any]]:
     """Read refreshable Claude Code OAuth credentials from ~/.claude/.credentials.json.
 
-    This intentionally excludes ~/.claude.json primaryApiKey. Opencode's
+    This intentionally excludes ~/.claude.json primaryApiKey. Upstream's
     subscription flow is OAuth/setup-token based with refreshable credentials,
     and native direct Anthropic provider usage should follow that path rather
     than auto-detecting Claude's first-party managed key.

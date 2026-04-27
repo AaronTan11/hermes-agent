@@ -22,7 +22,7 @@ concurrency:
 jobs:
   build-and-deploy:
     # Only run on the upstream repository, not on forks
-    if: github.repository == 'NousResearch/rhemify'
+    if: github.repository == 'AaronTan11/rhemify'
     runs-on: ubuntu-latest
     environment:
       name: github-pages

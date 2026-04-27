@@ -259,7 +259,7 @@ class TestRootLevelProviderOverride:
 
         config_path = rhemify_home / "config.yaml"
         config_path.write_text(yaml.safe_dump({
-            "provider": "opencode-go",  # stale root-level key
+            "provider": "upstream-go",  # stale root-level key
             "model": {
                 "default": "google/gemini-3-flash-preview",
                 "provider": "openrouter",  # correct canonical key
@@ -282,7 +282,7 @@ class TestRootLevelProviderOverride:
 
         config_path = rhemify_home / "config.yaml"
         config_path.write_text(yaml.safe_dump({
-            "provider": "opencode-go",  # stale root key
+            "provider": "upstream-go",  # stale root key
             "model": {
                 "default": "google/gemini-3-flash-preview",
                 # no explicit model.provider — defaults provide "auto"
@@ -293,15 +293,15 @@ class TestRootLevelProviderOverride:
         monkeypatch.setattr(cli, "_rhemify_home", rhemify_home)
         cfg = cli.load_cli_config()
 
-        # Root-level "opencode-go" must NOT leak through
-        assert cfg["model"]["provider"] != "opencode-go"
+        # Root-level "upstream-go" must NOT leak through
+        assert cfg["model"]["provider"] != "upstream-go"
 
     def test_normalize_root_model_keys_moves_to_model(self):
         """_normalize_root_model_keys migrates root keys into model section."""
         from rhemify_cli.config import _normalize_root_model_keys
 
         config = {
-            "provider": "opencode-go",
+            "provider": "upstream-go",
             "base_url": "https://example.com/v1",
             "model": {
                 "default": "some-model",
@@ -312,7 +312,7 @@ class TestRootLevelProviderOverride:
         assert "provider" not in result
         assert "base_url" not in result
         # Migrated into model section
-        assert result["model"]["provider"] == "opencode-go"
+        assert result["model"]["provider"] == "upstream-go"
         assert result["model"]["base_url"] == "https://example.com/v1"
 
     def test_normalize_root_model_keys_does_not_override_existing(self):

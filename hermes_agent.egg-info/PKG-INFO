@@ -1,0 +1,282 @@
+Metadata-Version: 2.4
+Name: rhemify
+Version: 0.7.0
+Summary: The self-improving AI agent — creates skills from experience, improves them during use, and runs anywhere
+Author: Aaron Tan
+License: MIT
+Requires-Python: >=3.11
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: openai<3,>=2.21.0
+Requires-Dist: anthropic<1,>=0.39.0
+Requires-Dist: python-dotenv<2,>=1.2.1
+Requires-Dist: fire<1,>=0.7.1
+Requires-Dist: httpx<1,>=0.28.1
+Requires-Dist: rich<15,>=14.3.3
+Requires-Dist: tenacity<10,>=9.1.4
+Requires-Dist: pyyaml<7,>=6.0.2
+Requires-Dist: requests<3,>=2.33.0
+Requires-Dist: jinja2<4,>=3.1.5
+Requires-Dist: pydantic<3,>=2.12.5
+Requires-Dist: prompt_toolkit<4,>=3.0.52
+Requires-Dist: exa-py<3,>=2.9.0
+Requires-Dist: firecrawl-py<5,>=4.16.0
+Requires-Dist: parallel-web<1,>=0.4.2
+Requires-Dist: fal-client<1,>=0.13.1
+Requires-Dist: edge-tts<8,>=7.2.7
+Requires-Dist: PyJWT[crypto]<3,>=2.12.0
+Provides-Extra: modal
+Requires-Dist: modal<2,>=1.0.0; extra == "modal"
+Provides-Extra: daytona
+Requires-Dist: daytona<1,>=0.148.0; extra == "daytona"
+Provides-Extra: dev
+Requires-Dist: debugpy<2,>=1.8.0; extra == "dev"
+Requires-Dist: pytest<10,>=9.0.2; extra == "dev"
+Requires-Dist: pytest-asyncio<2,>=1.3.0; extra == "dev"
+Requires-Dist: pytest-xdist<4,>=3.0; extra == "dev"
+Requires-Dist: mcp<2,>=1.2.0; extra == "dev"
+Provides-Extra: messaging
+Requires-Dist: python-telegram-bot[webhooks]<23,>=22.6; extra == "messaging"
+Requires-Dist: discord.py[voice]<3,>=2.7.1; extra == "messaging"
+Requires-Dist: aiohttp<4,>=3.13.3; extra == "messaging"
+Requires-Dist: slack-bolt<2,>=1.18.0; extra == "messaging"
+Requires-Dist: slack-sdk<4,>=3.27.0; extra == "messaging"
+Provides-Extra: cron
+Requires-Dist: croniter<7,>=6.0.0; extra == "cron"
+Provides-Extra: slack
+Requires-Dist: slack-bolt<2,>=1.18.0; extra == "slack"
+Requires-Dist: slack-sdk<4,>=3.27.0; extra == "slack"
+Provides-Extra: matrix
+Requires-Dist: matrix-nio[e2e]<1,>=0.24.0; extra == "matrix"
+Requires-Dist: Markdown<4,>=3.6; extra == "matrix"
+Provides-Extra: cli
+Requires-Dist: simple-term-menu<2,>=1.0; extra == "cli"
+Provides-Extra: tts-premium
+Requires-Dist: elevenlabs<2,>=1.0; extra == "tts-premium"
+Provides-Extra: voice
+Requires-Dist: faster-whisper<2,>=1.0.0; extra == "voice"
+Requires-Dist: sounddevice<1,>=0.4.6; extra == "voice"
+Requires-Dist: numpy<3,>=1.24.0; extra == "voice"
+Provides-Extra: pty
+Requires-Dist: ptyprocess<1,>=0.7.0; sys_platform != "win32" and extra == "pty"
+Requires-Dist: pywinpty<3,>=2.0.0; sys_platform == "win32" and extra == "pty"
+Provides-Extra: honcho
+Requires-Dist: honcho-ai<3,>=2.0.1; extra == "honcho"
+Provides-Extra: mcp
+Requires-Dist: mcp<2,>=1.2.0; extra == "mcp"
+Provides-Extra: homeassistant
+Requires-Dist: aiohttp<4,>=3.9.0; extra == "homeassistant"
+Provides-Extra: sms
+Requires-Dist: aiohttp<4,>=3.9.0; extra == "sms"
+Provides-Extra: acp
+Requires-Dist: agent-client-protocol<1.0,>=0.9.0; extra == "acp"
+Provides-Extra: dingtalk
+Requires-Dist: dingtalk-stream<1,>=0.1.0; extra == "dingtalk"
+Provides-Extra: feishu
+Requires-Dist: lark-oapi<2,>=1.5.3; extra == "feishu"
+Provides-Extra: sdk
+Requires-Dist: claude-agent-sdk>=0.1.0; extra == "sdk"
+Provides-Extra: rl
+Requires-Dist: atroposlib @ git+https://github.com/AaronTan11/atropos.git ; extra == "rl"
+Requires-Dist: tinker @ git+https://github.com/thinking-machines-lab/tinker.git ; extra == "rl"
+Requires-Dist: fastapi<1,>=0.104.0; extra == "rl"
+Requires-Dist: uvicorn[standard]<1,>=0.24.0; extra == "rl"
+Requires-Dist: wandb<1,>=0.15.0; extra == "rl"
+Provides-Extra: yc-bench
+Requires-Dist: yc-bench @ git+https://github.com/collinear-ai/yc-bench.git ; python_version >= "3.12" and extra == "yc-bench"
+Provides-Extra: all
+Requires-Dist: rhemify[modal]; extra == "all"
+Requires-Dist: rhemify[daytona]; extra == "all"
+Requires-Dist: rhemify[messaging]; extra == "all"
+Requires-Dist: rhemify[cron]; extra == "all"
+Requires-Dist: rhemify[cli]; extra == "all"
+Requires-Dist: rhemify[dev]; extra == "all"
+Requires-Dist: rhemify[tts-premium]; extra == "all"
+Requires-Dist: rhemify[slack]; extra == "all"
+Requires-Dist: rhemify[pty]; extra == "all"
+Requires-Dist: rhemify[honcho]; extra == "all"
+Requires-Dist: rhemify[mcp]; extra == "all"
+Requires-Dist: rhemify[homeassistant]; extra == "all"
+Requires-Dist: rhemify[sms]; extra == "all"
+Requires-Dist: rhemify[acp]; extra == "all"
+Requires-Dist: rhemify[voice]; extra == "all"
+Requires-Dist: rhemify[dingtalk]; extra == "all"
+Requires-Dist: rhemify[feishu]; extra == "all"
+Requires-Dist: rhemify[sdk]; extra == "all"
+Dynamic: license-file
+
+<p align="center">
+  <img src="assets/banner.png" alt="Rhemify" width="100%">
+</p>
+
+# Rhemify ☤
+
+<p align="center">
+  <a href="https://rhemify.aarontan11.com/docs/"><img src="https://img.shields.io/badge/Docs-rhemify--agent.aarontan11.com-FFD700?style=for-the-badge" alt="Documentation"></a>
+  <a href="https://discord.gg/AaronTan11"><img src="https://img.shields.io/badge/Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white" alt="Discord"></a>
+  <a href="https://github.com/AaronTan11/rhemify/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" alt="License: MIT"></a>
+  <a href="https://aarontan11.com"><img src="https://img.shields.io/badge/Built%20by-Nous%20Research-blueviolet?style=for-the-badge" alt="Built by Aaron Tan"></a>
+</p>
+
+**The self-improving AI agent built by [Aaron Tan](https://aarontan11.com).** It's the only agent with a built-in learning loop — it creates skills from experience, improves them during use, nudges itself to persist knowledge, searches its own past conversations, and builds a deepening model of who you are across sessions. Run it on a $5 VPS, a GPU cluster, or serverless infrastructure that costs nearly nothing when idle. It's not tied to your laptop — talk to it from Telegram while it works on a cloud VM.
+
+Use any model you want — [Nous Portal](https://portal.aarontan11.com), [OpenRouter](https://openrouter.ai) (200+ models), [z.ai/GLM](https://z.ai), [Kimi/Moonshot](https://platform.moonshot.ai), [MiniMax](https://www.minimax.io), OpenAI, or your own endpoint. Switch with `rhemify model` — no code changes, no lock-in.
+
+<table>
+<tr><td><b>A real terminal interface</b></td><td>Full TUI with multiline editing, slash-command autocomplete, conversation history, interrupt-and-redirect, and streaming tool output.</td></tr>
+<tr><td><b>Lives where you do</b></td><td>Telegram, Discord, Slack, WhatsApp, Signal, and CLI — all from a single gateway process. Voice memo transcription, cross-platform conversation continuity.</td></tr>
+<tr><td><b>A closed learning loop</b></td><td>Agent-curated memory with periodic nudges. Autonomous skill creation after complex tasks. Skills self-improve during use. FTS5 session search with LLM summarization for cross-session recall. <a href="https://github.com/plastic-labs/honcho">Honcho</a> dialectic user modeling. Compatible with the <a href="https://agentskills.io">agentskills.io</a> open standard.</td></tr>
+<tr><td><b>Scheduled automations</b></td><td>Built-in cron scheduler with delivery to any platform. Daily reports, nightly backups, weekly audits — all in natural language, running unattended.</td></tr>
+<tr><td><b>Delegates and parallelizes</b></td><td>Spawn isolated subagents for parallel workstreams. Write Python scripts that call tools via RPC, collapsing multi-step pipelines into zero-context-cost turns.</td></tr>
+<tr><td><b>Runs anywhere, not just your laptop</b></td><td>Six terminal backends — local, Docker, SSH, Daytona, Singularity, and Modal. Daytona and Modal offer serverless persistence — your agent's environment hibernates when idle and wakes on demand, costing nearly nothing between sessions. Run it on a $5 VPS or a GPU cluster.</td></tr>
+<tr><td><b>Research-ready</b></td><td>Batch trajectory generation, Atropos RL environments, trajectory compression for training the next generation of tool-calling models.</td></tr>
+</table>
+
+---
+
+## Quick Install
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/AaronTan11/rhemify/main/scripts/install.sh | bash
+```
+
+Works on Linux, macOS, and WSL2. The installer handles everything — Python, Node.js, dependencies, and the `rhemify` command. No prerequisites except git.
+
+> **Windows:** Native Windows is not supported. Please install [WSL2](https://learn.microsoft.com/en-us/windows/wsl/install) and run the command above.
+
+After installation:
+
+```bash
+source ~/.bashrc    # reload shell (or: source ~/.zshrc)
+rhemify              # start chatting!
+```
+
+---
+
+## Getting Started
+
+```bash
+rhemify              # Interactive CLI — start a conversation
+rhemify model        # Choose your LLM provider and model
+rhemify tools        # Configure which tools are enabled
+rhemify config set   # Set individual config values
+rhemify gateway      # Start the messaging gateway (Telegram, Discord, etc.)
+rhemify setup        # Run the full setup wizard (configures everything at once)
+rhemify claw migrate # Migrate from upstream (if coming from upstream)
+rhemify update       # Update to the latest version
+rhemify doctor       # Diagnose any issues
+```
+
+📖 **[Full documentation →](https://rhemify.aarontan11.com/docs/)**
+
+## CLI vs Messaging Quick Reference
+
+Rhemify has two entry points: start the terminal UI with `rhemify`, or run the gateway and talk to it from Telegram, Discord, Slack, WhatsApp, Signal, or Email. Once you're in a conversation, many slash commands are shared across both interfaces.
+
+| Action | CLI | Messaging platforms |
+|---------|-----|---------------------|
+| Start chatting | `rhemify` | Run `rhemify gateway setup` + `rhemify gateway start`, then send the bot a message |
+| Start fresh conversation | `/new` or `/reset` | `/new` or `/reset` |
+| Change model | `/model [provider:model]` | `/model [provider:model]` |
+| Set a personality | `/personality [name]` | `/personality [name]` |
+| Retry or undo the last turn | `/retry`, `/undo` | `/retry`, `/undo` |
+| Compress context / check usage | `/compress`, `/usage`, `/insights [--days N]` | `/compress`, `/usage`, `/insights [days]` |
+| Browse skills | `/skills` or `/<skill-name>` | `/skills` or `/<skill-name>` |
+| Interrupt current work | `Ctrl+C` or send a new message | `/stop` or send a new message |
+| Platform-specific status | `/platforms` | `/status`, `/sethome` |
+
+For the full command lists, see the [CLI guide](https://rhemify.aarontan11.com/docs/user-guide/cli) and the [Messaging Gateway guide](https://rhemify.aarontan11.com/docs/user-guide/messaging).
+
+---
+
+## Documentation
+
+All documentation lives at **[rhemify.aarontan11.com/docs](https://rhemify.aarontan11.com/docs/)**:
+
+| Section | What's Covered |
+|---------|---------------|
+| [Quickstart](https://rhemify.aarontan11.com/docs/getting-started/quickstart) | Install → setup → first conversation in 2 minutes |
+| [CLI Usage](https://rhemify.aarontan11.com/docs/user-guide/cli) | Commands, keybindings, personalities, sessions |
+| [Configuration](https://rhemify.aarontan11.com/docs/user-guide/configuration) | Config file, providers, models, all options |
+| [Messaging Gateway](https://rhemify.aarontan11.com/docs/user-guide/messaging) | Telegram, Discord, Slack, WhatsApp, Signal, Home Assistant |
+| [Security](https://rhemify.aarontan11.com/docs/user-guide/security) | Command approval, DM pairing, container isolation |
+| [Tools & Toolsets](https://rhemify.aarontan11.com/docs/user-guide/features/tools) | 40+ tools, toolset system, terminal backends |
+| [Skills System](https://rhemify.aarontan11.com/docs/user-guide/features/skills) | Procedural memory, Skills Hub, creating skills |
+| [Memory](https://rhemify.aarontan11.com/docs/user-guide/features/memory) | Persistent memory, user profiles, best practices |
+| [MCP Integration](https://rhemify.aarontan11.com/docs/user-guide/features/mcp) | Connect any MCP server for extended capabilities |
+| [Cron Scheduling](https://rhemify.aarontan11.com/docs/user-guide/features/cron) | Scheduled tasks with platform delivery |
+| [Context Files](https://rhemify.aarontan11.com/docs/user-guide/features/context-files) | Project context that shapes every conversation |
+| [Architecture](https://rhemify.aarontan11.com/docs/developer-guide/architecture) | Project structure, agent loop, key classes |
+| [Contributing](https://rhemify.aarontan11.com/docs/developer-guide/contributing) | Development setup, PR process, code style |
+| [CLI Reference](https://rhemify.aarontan11.com/docs/reference/cli-commands) | All commands and flags |
+| [Environment Variables](https://rhemify.aarontan11.com/docs/reference/environment-variables) | Complete env var reference |
+
+---
+
+## Migrating from upstream
+
+If you're coming from upstream, Rhemify can automatically import your settings, memories, skills, and API keys.
+
+**During first-time setup:** The setup wizard (`rhemify setup`) automatically detects `~/.upstream` and offers to migrate before configuration begins.
+
+**Anytime after install:**
+
+```bash
+rhemify claw migrate              # Interactive migration (full preset)
+rhemify claw migrate --dry-run    # Preview what would be migrated
+rhemify claw migrate --preset user-data   # Migrate without secrets
+rhemify claw migrate --overwrite  # Overwrite existing conflicts
+```
+
+What gets imported:
+- **SOUL.md** — persona file
+- **Memories** — MEMORY.md and USER.md entries
+- **Skills** — user-created skills → `~/.rhemify/skills/upstream-imports/`
+- **Command allowlist** — approval patterns
+- **Messaging settings** — platform configs, allowed users, working directory
+- **API keys** — allowlisted secrets (Telegram, OpenRouter, OpenAI, Anthropic, ElevenLabs)
+- **TTS assets** — workspace audio files
+- **Workspace instructions** — AGENTS.md (with `--workspace-target`)
+
+See `rhemify claw migrate --help` for all options, or use the `upstream-migration` skill for an interactive agent-guided migration with dry-run previews.
+
+---
+
+## Contributing
+
+We welcome contributions! See the [Contributing Guide](https://rhemify.aarontan11.com/docs/developer-guide/contributing) for development setup, code style, and PR process.
+
+Quick start for contributors:
+
+```bash
+git clone https://github.com/AaronTan11/rhemify.git
+cd rhemify
+curl -LsSf https://astral.sh/uv/install.sh | sh
+uv venv venv --python 3.11
+source venv/bin/activate
+uv pip install -e ".[all,dev]"
+python -m pytest tests/ -q
+```
+
+> **RL Training (optional):** To work on the RL/Tinker-Atropos integration:
+> ```bash
+> git submodule update --init tinker-atropos
+> uv pip install -e "./tinker-atropos"
+> ```
+
+---
+
+## Community
+
+- 💬 [Discord](https://discord.gg/AaronTan11)
+- 📚 [Skills Hub](https://agentskills.io)
+- 🐛 [Issues](https://github.com/AaronTan11/rhemify/issues)
+- 💡 [Discussions](https://github.com/AaronTan11/rhemify/discussions)
+
+---
+
+## License
+
+MIT — see [LICENSE](LICENSE).
+
+Built by [Aaron Tan](https://aarontan11.com).

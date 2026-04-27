@@ -404,7 +404,7 @@ def switch_model(
     from rhemify_cli.models import (
         detect_provider_for_model,
         validate_requested_model,
-        opencode_model_api_mode,
+        upstream_model_api_mode,
     )
     from rhemify_cli.runtime_provider import resolve_runtime_provider
 
@@ -636,8 +636,8 @@ def switch_model(
         )
 
     # --- upstream api_mode override ---
-    if target_provider in {"opencode-zen", "opencode-go", "opencode", "opencode-go"}:
-        api_mode = opencode_model_api_mode(target_provider, new_model)
+    if target_provider in {"upstream-zen", "upstream-go", "upstream", "upstream-go"}:
+        api_mode = upstream_model_api_mode(target_provider, new_model)
 
     # --- Determine api_mode if not already set ---
     if not api_mode:

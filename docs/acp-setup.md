@@ -224,5 +224,5 @@ RHEMIFY_LOG_LEVEL=DEBUG rhemify acp
 ## Further Reading
 
 - [ACP Specification](https://github.com/anysphere/acp)
-- [Rhemify Documentation](https://github.com/NousResearch/rhemify)
+- [Rhemify Documentation](https://github.com/AaronTan11/rhemify)
 - Run `rhemify --help` for all CLI options

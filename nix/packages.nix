@@ -44,7 +44,7 @@
 
         meta = with pkgs.lib; {
           description = "AI agent with advanced tool-calling capabilities";
-          homepage = "https://github.com/NousResearch/rhemify";
+          homepage = "https://github.com/AaronTan11/rhemify";
           mainProgram = "rhemify";
           license = licenses.mit;
           platforms = platforms.unix;

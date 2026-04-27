@@ -5407,7 +5407,7 @@ class AIAgent:
         # for _is_nous when their backend is updated.
         if provider_preferences and _is_openrouter:
             extra_body["provider"] = provider_preferences
-        _is_nous = "nousresearch" in self._base_url_lower
+        _is_nous = "aarontan11" in self._base_url_lower
 
         if self._supports_reasoning_extra_body():
             if _is_github_models:
@@ -5445,7 +5445,7 @@ class AIAgent:
         Some providers/routes reject `reasoning` with 400s, so gate it to
         known reasoning-capable model families and direct Provider.
         """
-        if "nousresearch" in self._base_url_lower:
+        if "aarontan11" in self._base_url_lower:
             return True
         if "ai-gateway.vercel.sh" in self._base_url_lower:
             return True
@@ -6652,7 +6652,7 @@ class AIAgent:
                     api_messages.insert(sys_offset + idx, pfm.copy())
 
             summary_extra_body = {}
-            _is_nous = "nousresearch" in self._base_url_lower
+            _is_nous = "aarontan11" in self._base_url_lower
             if self._supports_reasoning_extra_body():
                 if self.reasoning_config is not None:
                     summary_extra_body["reasoning"] = self.reasoning_config

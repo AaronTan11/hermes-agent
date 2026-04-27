@@ -102,15 +102,15 @@ RHEMIFY_OVERLAYS: Dict[str, RhemifyOverlay] = {
         transport="openai_chat",
         is_aggregator=True,
     ),
-    "opencode": RhemifyOverlay(
+    "upstream": RhemifyOverlay(
         transport="openai_chat",
         is_aggregator=True,
-        base_url_env_var="OPENCODE_ZEN_BASE_URL",
+        base_url_env_var="UPSTREAM_ZEN_BASE_URL",
     ),
-    "opencode-go": RhemifyOverlay(
+    "upstream-go": RhemifyOverlay(
         transport="openai_chat",
         is_aggregator=True,
-        base_url_env_var="OPENCODE_GO_BASE_URL",
+        base_url_env_var="UPSTREAM_GO_BASE_URL",
     ),
     "kilo": RhemifyOverlay(
         transport="openai_chat",
@@ -185,13 +185,13 @@ ALIASES: Dict[str, str] = {
     "aigateway": "vercel",
     "vercel-ai-gateway": "vercel",
 
-    # opencode (models.dev ID for upstream Zen)
-    "opencode-zen": "opencode",
-    "zen": "opencode",
+    # upstream (models.dev ID for upstream Zen)
+    "upstream-zen": "upstream",
+    "zen": "upstream",
 
-    # opencode-go
-    "go": "opencode-go",
-    "opencode-go-sub": "opencode-go",
+    # upstream-go
+    "go": "upstream-go",
+    "upstream-go-sub": "upstream-go",
 
     # kilo (models.dev ID for KiloCode)
     "kilocode": "kilo",
@@ -382,8 +382,8 @@ LABELS: Dict[str, str] = {
     "deepseek": "DeepSeek",
     "alibaba": "Alibaba Cloud (DashScope)",
     "vercel": "Vercel AI Gateway",
-    "opencode": "upstream Zen",
-    "opencode-go": "upstream Go",
+    "upstream": "upstream Zen",
+    "upstream-go": "upstream Go",
     "kilo": "Kilo Gateway",
     "huggingface": "Hugging Face",
     "local": "Local endpoint",
@@ -393,7 +393,7 @@ LABELS: Dict[str, str] = {
     "kilocode": "Kilo Gateway",
     "copilot": "GitHub Copilot",
     "kimi-coding": "Kimi / Moonshot",
-    "opencode-zen": "upstream Zen",
+    "upstream-zen": "upstream Zen",
 }
 
 

@@ -699,15 +699,15 @@ OPTIONAL_ENV_VARS = {
         "category": "provider",
         "advanced": True,
     },
-    "OPENCODE_ZEN_API_KEY": {
+    "UPSTREAM_ZEN_API_KEY": {
         "description": "upstream Zen API key (pay-as-you-go access to curated models)",
         "prompt": "upstream Zen API key",
-        "url": "https://opencode.ai/auth",
+        "url": "https://upstream.ai/auth",
         "password": True,
         "category": "provider",
         "advanced": True,
     },
-    "OPENCODE_ZEN_BASE_URL": {
+    "UPSTREAM_ZEN_BASE_URL": {
         "description": "upstream Zen base URL override",
         "prompt": "upstream Zen base URL (leave empty for default)",
         "url": None,
@@ -715,15 +715,15 @@ OPTIONAL_ENV_VARS = {
         "category": "provider",
         "advanced": True,
     },
-    "OPENCODE_GO_API_KEY": {
+    "UPSTREAM_GO_API_KEY": {
         "description": "upstream Go API key ($10/month subscription for open models)",
         "prompt": "upstream Go API key",
-        "url": "https://opencode.ai/auth",
+        "url": "https://upstream.ai/auth",
         "password": True,
         "category": "provider",
         "advanced": True,
     },
-    "OPENCODE_GO_BASE_URL": {
+    "UPSTREAM_GO_BASE_URL": {
         "description": "upstream Go base URL override",
         "prompt": "upstream Go base URL (leave empty for default)",
         "url": None,

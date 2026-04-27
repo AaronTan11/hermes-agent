@@ -188,25 +188,25 @@ PROVIDER_REGISTRY: Dict[str, ProviderConfig] = {
         api_key_env_vars=("AI_GATEWAY_API_KEY",),
         base_url_env_var="AI_GATEWAY_BASE_URL",
     ),
-    "opencode-zen": ProviderConfig(
-        id="opencode-zen",
+    "upstream-zen": ProviderConfig(
+        id="upstream-zen",
         name="upstream Zen",
         auth_type="api_key",
-        inference_base_url="https://opencode.ai/zen/v1",
-        api_key_env_vars=("OPENCODE_ZEN_API_KEY",),
-        base_url_env_var="OPENCODE_ZEN_BASE_URL",
+        inference_base_url="https://upstream.ai/zen/v1",
+        api_key_env_vars=("UPSTREAM_ZEN_API_KEY",),
+        base_url_env_var="UPSTREAM_ZEN_BASE_URL",
     ),
-    "opencode-go": ProviderConfig(
-        id="opencode-go",
+    "upstream-go": ProviderConfig(
+        id="upstream-go",
         name="upstream Go",
         auth_type="api_key",
         # upstream Go mixes API surfaces by model:
         # - GLM / Kimi use OpenAI-compatible chat completions under /v1
         # - MiniMax models use Anthropic Messages under /v1/messages
         # Keep the provider base at /v1 and select api_mode per-model.
-        inference_base_url="https://opencode.ai/zen/go/v1",
-        api_key_env_vars=("OPENCODE_GO_API_KEY",),
-        base_url_env_var="OPENCODE_GO_BASE_URL",
+        inference_base_url="https://upstream.ai/zen/go/v1",
+        api_key_env_vars=("UPSTREAM_GO_API_KEY",),
+        base_url_env_var="UPSTREAM_GO_BASE_URL",
     ),
     "kilocode": ProviderConfig(
         id="kilocode",
@@ -765,9 +765,9 @@ def resolve_provider(
         "github-models": "copilot", "github-model": "copilot",
         "github-copilot-acp": "copilot-acp", "copilot-acp-agent": "copilot-acp",
         "aigateway": "ai-gateway", "vercel": "ai-gateway", "vercel-ai-gateway": "ai-gateway",
-        "opencode": "opencode-zen", "zen": "opencode-zen",
+        "upstream": "upstream-zen", "zen": "upstream-zen",
         "hf": "huggingface", "hugging-face": "huggingface", "huggingface-hub": "huggingface",
-        "go": "opencode-go", "opencode-go-sub": "opencode-go",
+        "go": "upstream-go", "upstream-go-sub": "upstream-go",
         "kilo": "kilocode", "kilo-code": "kilocode", "kilo-gateway": "kilocode",
         # Local server aliases — route through the generic custom provider
         "lmstudio": "custom", "lm-studio": "custom", "lm_studio": "custom",

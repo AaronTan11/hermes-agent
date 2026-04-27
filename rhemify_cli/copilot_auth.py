@@ -29,7 +29,7 @@ from typing import Optional
 
 logger = logging.getLogger(__name__)
 
-# OAuth device code flow constants (same client ID as opencode/Copilot CLI)
+# OAuth device code flow constants (same client ID as upstream/Copilot CLI)
 COPILOT_OAUTH_CLIENT_ID = "Ov23li8tweQw6odWQebz"
 COPILOT_DEVICE_CODE_URL = "https://github.com/login/device/code"
 COPILOT_ACCESS_TOKEN_URL = "https://github.com/login/oauth/access_token"
@@ -158,7 +158,7 @@ def copilot_device_code_login(
     Prints instructions for the user, polls for completion, and returns
     the OAuth access token on success, or None on failure/cancellation.
 
-    This replicates the flow used by opencode and the Copilot CLI.
+    This replicates the flow used by upstream and the Copilot CLI.
     """
     import urllib.request
     import urllib.parse
@@ -280,7 +280,7 @@ def copilot_request_headers(
 ) -> dict[str, str]:
     """Build the standard headers for Copilot API requests.
 
-    Replicates the header set used by opencode and the Copilot CLI.
+    Replicates the header set used by upstream and the Copilot CLI.
     """
     headers: dict[str, str] = {
         "Editor-Version": "vscode/1.104.1",

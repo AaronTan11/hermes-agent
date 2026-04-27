@@ -49,8 +49,8 @@ _PROVIDER_ENV_HINTS = (
     "DASHSCOPE_API_KEY",
     "HF_TOKEN",
     "AI_GATEWAY_API_KEY",
-    "OPENCODE_ZEN_API_KEY",
-    "OPENCODE_GO_API_KEY",
+    "UPSTREAM_ZEN_API_KEY",
+    "UPSTREAM_GO_API_KEY",
 )
 
 
@@ -679,13 +679,13 @@ def run_doctor(args):
         ("DeepSeek",         ("DEEPSEEK_API_KEY",),                           "https://api.deepseek.com/v1/models",  "DEEPSEEK_BASE_URL", True),
         ("Hugging Face",     ("HF_TOKEN",),                                   "https://router.huggingface.co/v1/models", "HF_BASE_URL", True),
         ("Alibaba/DashScope", ("DASHSCOPE_API_KEY",),                         "https://dashscope-intl.aliyuncs.com/compatible-mode/v1/models", "DASHSCOPE_BASE_URL", True),
-        # MiniMax APIs don't support /models endpoint — https://github.com/NousResearch/rhemify/issues/811
+        # MiniMax APIs don't support /models endpoint — https://github.com/AaronTan11/rhemify/issues/811
         ("MiniMax",          ("MINIMAX_API_KEY",),                            None,                                  "MINIMAX_BASE_URL", False),
         ("MiniMax (China)",  ("MINIMAX_CN_API_KEY",),                         None,                                  "MINIMAX_CN_BASE_URL", False),
         ("AI Gateway",       ("AI_GATEWAY_API_KEY",),                          "https://ai-gateway.vercel.sh/v1/models", "AI_GATEWAY_BASE_URL", True),
         ("Kilo Code",        ("KILOCODE_API_KEY",),                            "https://api.kilo.ai/api/gateway/models",  "KILOCODE_BASE_URL", True),
-        ("upstream Zen",     ("OPENCODE_ZEN_API_KEY",),                        "https://opencode.ai/zen/v1/models",  "OPENCODE_ZEN_BASE_URL", True),
-        ("upstream Go",      ("OPENCODE_GO_API_KEY",),                         "https://opencode.ai/zen/go/v1/models", "OPENCODE_GO_BASE_URL", True),
+        ("upstream Zen",     ("UPSTREAM_ZEN_API_KEY",),                        "https://upstream.ai/zen/v1/models",  "UPSTREAM_ZEN_BASE_URL", True),
+        ("upstream Go",      ("UPSTREAM_GO_API_KEY",),                         "https://upstream.ai/zen/go/v1/models", "UPSTREAM_GO_BASE_URL", True),
     ]
     for _pname, _env_vars, _default_url, _base_env, _supports_health_check in _apikey_providers:
         _key = ""

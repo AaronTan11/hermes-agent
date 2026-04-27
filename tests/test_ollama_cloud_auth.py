@@ -523,7 +523,7 @@ class TestSwitchModelDirectAliasOverride:
 
         monkeypatch.setattr("rhemify_cli.models.validate_requested_model",
             lambda *a, **kw: {"accepted": True, "persist": True, "recognized": True, "message": None})
-        monkeypatch.setattr("rhemify_cli.models.opencode_model_api_mode",
+        monkeypatch.setattr("rhemify_cli.models.upstream_model_api_mode",
             lambda *a, **kw: "openai_compat")
 
         result = ms.switch_model("qwen", "openrouter", "old-model")
@@ -548,7 +548,7 @@ class TestSwitchModelDirectAliasOverride:
         )
         monkeypatch.setattr("rhemify_cli.models.validate_requested_model",
             lambda *a, **kw: {"accepted": True, "persist": True, "recognized": True, "message": None})
-        monkeypatch.setattr("rhemify_cli.models.opencode_model_api_mode",
+        monkeypatch.setattr("rhemify_cli.models.upstream_model_api_mode",
             lambda *a, **kw: "openai_compat")
 
         result = ms.switch_model("local", "openrouter", "old-model")

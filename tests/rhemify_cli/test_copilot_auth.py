@@ -161,7 +161,7 @@ class TestCopilotDefaultHeaders:
 
 
 class TestApiModeSelection:
-    """API mode selection matching opencode's shouldUseCopilotResponsesApi."""
+    """API mode selection matching upstream's shouldUseCopilotResponsesApi."""
 
     def test_gpt5_uses_responses(self):
         from rhemify_cli.models import _should_use_copilot_responses_api

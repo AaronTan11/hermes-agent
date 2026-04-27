@@ -166,17 +166,17 @@ def _resolve_runtime_from_pool_entry(
         configured_mode = _parse_api_mode(model_cfg.get("api_mode"))
         if configured_mode and _provider_supports_explicit_api_mode(provider, configured_provider):
             api_mode = configured_mode
-        elif provider in ("opencode-zen", "opencode-go"):
-            from rhemify_cli.models import opencode_model_api_mode
-            api_mode = opencode_model_api_mode(provider, model_cfg.get("default", ""))
+        elif provider in ("upstream-zen", "upstream-go"):
+            from rhemify_cli.models import upstream_model_api_mode
+            api_mode = upstream_model_api_mode(provider, model_cfg.get("default", ""))
         elif base_url.rstrip("/").endswith("/anthropic"):
             api_mode = "anthropic_messages"
 
     # upstream base URLs end with /v1 for OpenAI-compatible models, but the
     # Anthropic SDK prepends its own /v1/messages to the base_url.  Strip the
     # trailing /v1 so the SDK constructs the correct path (e.g.
-    # https://opencode.ai/zen/go/v1/messages instead of .../v1/v1/messages).
-    if api_mode == "anthropic_messages" and provider in ("opencode-zen", "opencode-go"):
+    # https://upstream.ai/zen/go/v1/messages instead of .../v1/v1/messages).
+    if api_mode == "anthropic_messages" and provider in ("upstream-zen", "upstream-go"):
         base_url = re.sub(r"/v1/?$", "", base_url)
 
     return {
@@ -714,15 +714,15 @@ def resolve_runtime_provider(
             configured_mode = _parse_api_mode(model_cfg.get("api_mode"))
             if configured_mode and _provider_supports_explicit_api_mode(provider, configured_provider):
                 api_mode = configured_mode
-            elif provider in ("opencode-zen", "opencode-go"):
-                from rhemify_cli.models import opencode_model_api_mode
-                api_mode = opencode_model_api_mode(provider, model_cfg.get("default", ""))
+            elif provider in ("upstream-zen", "upstream-go"):
+                from rhemify_cli.models import upstream_model_api_mode
+                api_mode = upstream_model_api_mode(provider, model_cfg.get("default", ""))
             # Auto-detect Anthropic-compatible endpoints by URL convention
             # (e.g. https://api.minimax.io/anthropic, https://dashscope.../anthropic)
             elif base_url.rstrip("/").endswith("/anthropic"):
                 api_mode = "anthropic_messages"
         # Strip trailing /v1 for upstream Anthropic models (see comment above).
-        if api_mode == "anthropic_messages" and provider in ("opencode-zen", "opencode-go"):
+        if api_mode == "anthropic_messages" and provider in ("upstream-zen", "upstream-go"):
             base_url = re.sub(r"/v1/?$", "", base_url)
         return {
             "provider": provider,
